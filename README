@@ -43,7 +43,7 @@ you want the camera to be at. 10 pictures should be good, going from looking at 
 the short side should suffice. If not, we can always take more pictures. 
 
 Lastly, once you have successfully done steps 1 and 2 and have gotten explicit confirmation from savannah that
-that what you are giving her wil work, you should work on using depth to track gray totes. By track I mean do 
+that what you are giving her will work, you should work on using depth to track gray totes. By track I mean do 
 1 and 2 for the gray totes.The algorithm will be exactly the same excluding how you set up the input image of 
 findcontours. This should take maybe an hour to set up because all the code is already written for you, it's 
 just a matter of finding it (look at topdepthtest)
