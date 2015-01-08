@@ -9,6 +9,8 @@
 using namespace std;
 using namespace cv;
 
+const Point2f fov(58, 0);
+
 enum LSide {
     LEFT_SIDE = 0,
     RIGHT_SIDE
@@ -214,6 +216,8 @@ std::vector<YellowTote> find_yellow_color(cv::Mat img)
             // if not, then we are seeing the box on the corner
             continue; // possible solution: split the boxes in half
         }
+        // find the x rotation
+        double xrot = (center.x / (img.cols / 2)) *
     }
     DEBUG_SHOW("Processed", draw);
     return totes;
