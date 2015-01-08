@@ -8,14 +8,16 @@ Hunter's Notes of Wisdom
 
 You need to compare the area of the contours vs the bounding rectangle.
 If it is not close to one, then you are looking at it at an angle 
-(That is if there is something on top of it.)
+(That is if there is something on top of it.) I do not know how the ratio
+will be when you are looking at it straight on. 
 
 You need to be developing with an image of a yellow tote with nothing on top of it. 
 The characteristics of that contour vs the one you're using are too different for an 
 algorithm to work in both cases. 
 
 You also need to decide if you want the camera to be < height of tote. This will also 
-change the algorithm dramatically. 
+change the algorithm dramatically. I suggest having the camera be at about half the 
+height of the tote. 
 
 There are two different things you should be sending to savanah:
 
@@ -51,3 +53,24 @@ just a matter of finding it (look at topdepthtest)
 If Darrel or someone asks why we are using the "heavy" kinect and not the asus xtion, tell them of the problems
 we have had with it; its inconsistency to work. I personally think we should sacrifice a little weight for 
 consistency. 
+
+Second Lastly, be mindful of variable declarations. I'm looking through your code and you are losing decimals 
+here and there and forcing yourself to static cast when you should have made the variable a float or double 
+to begin with. This is very low priority. It'd be a good task for someone who knows data types and a little vision, perhaos zac 
+We will review the code as a group to see if we can optimize it any more.
+
+Ones I found:
+
+int dist = distance(single.center, other.center);
+when center is declared as Point2f and distance returns double. 
+
+int xdist = abs(single.center.x - other.center.x); 
+center is Point 2f. 
+
+ int area = contourArea(contour);
+ contourArea returns a double
+ this forced you to static cast
+ double areaRatio = static_cast<double>(bound.area()) / area;
+ 
+ you have a function called "debugshow" that is literally just imshow. And you use both imshow and debugshow. 
+ Stay consistant. 
