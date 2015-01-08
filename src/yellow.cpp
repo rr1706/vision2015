@@ -48,8 +48,9 @@ double distance(Point2f one, Point2f two) {
 
 static Mat kern = getStructuringElement(MORPH_CROSS, Size(3, 3), Point(-1, -1));
 
-
-// this function may be bugged
+/*This function pairs left and right contours together, and 
+stores them as a class YellowTote*/
+// this function is be bugged
 std::vector<YellowTote> pairTotes(std::vector<SingleL> singles)
 {
     std::vector<YellowTote> detected_totes;
@@ -129,6 +130,11 @@ std::vector<YellowTote> find_yellow_ir(Mat ir)
     }
     std::vector<YellowTote> detected_totes = pairTotes(singles);
     // operation: split the detected totes into ones that look stacked and ones that aren't
+    /*The following code segment, that should be a seperate function,
+    checks to see if totes are stacked by comparing the x coordinates
+    If they are similar (<20 difference) they are considered stacked,
+    else they are considered unstacked*/
+
     std::vector<YellowTote> stacked_totes, unstacked_totes;
     printf("~~~~~~~~~~~~~~~~~~\n");
     for (size_t tote_i = 0; tote_i < detected_totes.size(); tote_i++) {

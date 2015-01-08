@@ -1,3 +1,6 @@
+/*These following 3 functions call for the corresponding image
+from the Microsoft Kinect v1 and return it as a cv::Mat*/
+
 #include <stdexcept>
 #include "libfreenect.h"
 #include "libfreenect_sync.h"
