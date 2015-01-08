@@ -38,14 +38,16 @@ A step you need to also do is figure out if a contour you are looking at is of 2
 This is a simple look at the ratio between bound.height as bound,width. It might become problematic if 
 you are looking at just the long side. I don't know for sure though. 
 
-Lastly, you need to work on using depth to track gray totes. By track I mean do 1 and 2 for the gray totes.
-The algorithm will be exactly the same excluding how you set up the input image of findcontours. This should 
-take maybe an hour to set up because all the code is already written for you, it's just a matter of finding it. 
+Ask for 5 minutes with the yellow tote and take several pictures of it from various angles, but at the height
+you want the camera to be at. 10 pictures should be good, going from looking at the long side to looking at
+the short side should suffice. If not, we can always take more pictures. 
+
+Lastly, once you have successfully done steps 1 and 2 and have gotten explicit confirmation from savannah that
+that what you are giving her wil work, you should work on using depth to track gray totes. By track I mean do 
+1 and 2 for the gray totes.The algorithm will be exactly the same excluding how you set up the input image of 
+findcontours. This should take maybe an hour to set up because all the code is already written for you, it's 
+just a matter of finding it (look at topdepthtest)
 
 If Darrel or someone asks why we are using the "heavy" kinect and not the asus xtion, tell them of the problems
 we have had with it; its inconsistency to work. I personally think we should sacrifice a little weight for 
 consistency. 
-
-Ask for 5 minutes with the yellow tote and take several pictures of it from various angles, but at the height
-you want the camera to be at. 10 pictures should be good, going from looking at the long side to looking at
-the short side should suffice. If not, we can always take more pictures. 
