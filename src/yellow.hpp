@@ -20,3 +20,5 @@ public:
 };
 
 std::vector<YellowTote> find_yellow_ir(cv::Mat img);
+
+std::vector<YellowTote> find_yellow_color(cv::Mat img);
