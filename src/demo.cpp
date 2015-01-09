@@ -4,15 +4,30 @@
 
 using namespace cv;
 
-int main() {
+int imdir() {
+    int i = 0;
     while (true) {
-        Mat color = imread("../images/color.jpg");
+        printf("%d\n", i);
+        Mat color = imread("../images/yellow box/im_" + std::to_string(i) + ".jpg");
         std::vector<YellowTote> totes = find_yellow_color(color);
         imshow("Input", color);
-        int key = cv::waitKey(33) & 0xFF;
-        if (key == 27) {
+        int raw = cv::waitKey(0) & 0xFFFF;
+        printf("KEY: %X\n", raw);
+        int key = raw & 0xFF;
+        if ((raw & 0xFF00) == 0xFF00) {
+            if (key == 0x51) {
+                i--;
+            } else if (key == 0x53) {
+                i++;
+            }
+        } else if (key == 27) {
             break;
         }
     }
     cv::destroyAllWindows();
+    return 0;
+}
+
+int main() {
+    return imdir();
 }
