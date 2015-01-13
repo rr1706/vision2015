@@ -2,10 +2,13 @@
 from the Microsoft Kinect v1 and return it as a cv::Mat*/
 
 #include <stdexcept>
+#ifdef __linux__
 #include "libfreenect.h"
 #include "libfreenect_sync.h"
+#endif
 #include "free.hpp"
 
+#ifdef __linux__
 cv::Mat kinectDepth(int index)
 {
     static char *data = 0;
@@ -38,4 +41,5 @@ cv::Mat kinectIR(int index)
     cv::Mat img(cv::Size(640, 480), CV_8UC1, data);
     return img;
 }
+#endif
 
