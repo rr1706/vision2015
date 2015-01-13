@@ -5,12 +5,14 @@ CONFIG -= qt
 
 SOURCES += demo.cpp \
     yellow.cpp \
-    ../lib/free.cpp
+    ../lib/free.cpp \
+    udpsender.cpp
 
 HEADERS += \
     util.hpp \
     yellow.hpp \
-    ../lib/free.hpp
+    ../lib/free.hpp \
+    udpsender.hpp
 
 LIBS += -lopencv_core -lopencv_imgproc -lopencv_highgui -lfreenect_sync
 INCLUDEPATH += ../lib
