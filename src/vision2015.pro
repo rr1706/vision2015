@@ -6,13 +6,20 @@ CONFIG -= qt
 SOURCES += demo.cpp \
     yellow.cpp \
     ../lib/free.cpp \
-    udpsender.cpp
+    udpsender.cpp \
+    functions.cpp \
+    color.cpp \
+    depth.cpp \
+    ir.cpp
 
 HEADERS += \
     util.hpp \
     yellow.hpp \
     ../lib/free.hpp \
-    udpsender.hpp
+    udpsender.hpp \
+    timer.h \
+    functions.h \
+    tracker.hpp
 
 unix:LIBS += -lopencv_core -lopencv_imgproc -lopencv_highgui -lfreenect_sync
 INCLUDEPATH += ../lib

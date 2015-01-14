@@ -9,231 +9,173 @@
 using namespace std;
 using namespace cv;
 
-const Point2f fov(58, 0);
-
-enum LSide {
-    LEFT_SIDE = 0,
-    RIGHT_SIDE
-};
-
-struct SingleL {
-    Point2f center;
-    LSide side;
-    Rect bound;
-    bool paired = false;
-};
-
-YellowTote::YellowTote(Side side, int x, int y) : facingSide(side), x(x), y(y)
+//Class Game Piece functions
+Game_Piece::Game_Piece() : x_rot(99), distance(-1), totes_high(-1), piece_type(-1)
 {
 }
 
-double YellowTote::xrot()
+//Mutalators
+void Game_Piece::set_xrot(float rotation)
 {
-    return 0;
+    x_rot = rotation;
 }
 
-Point2f YellowTote::point()
+void Game_Piece::set_distance(float d)
 {
-    return Point2f(x, y);
+    distance = d;
 }
 
-bool operator==(const YellowTote& one, const YellowTote& two)
+void Game_Piece::set_ratio(float rat)
 {
-    return one.x == two.x && one.y == two.y;
+    ratio = rat;
 }
 
-double distance(Point2f one, Point2f two) {
-    return sqrt(pow(one.x - two.x, 2) + pow(one.y - two.y, 2));
+void Game_Piece::set_totes_high(int stacks)
+{
+    totes_high = stacks;
 }
 
-static Mat kern = getStructuringElement(MORPH_CROSS, Size(3, 3), Point(-1, -1));
-
-/*This function pairs left and right contours together, and 
-stores them as a class YellowTote*/
-// this function is be bugged
-std::vector<YellowTote> pairTotes(std::vector<SingleL> singles)
+void Game_Piece::set_piece_type(int type)
 {
-    std::vector<YellowTote> detected_totes;
-    for (size_t i = 0; i < singles.size(); i++) {
-        SingleL single = singles[i];
-        if (single.paired)
-            continue;
-        for (size_t j = i + 1; j < singles.size(); j++) {
-            SingleL other = singles[j];
-            if (other.paired)
-                continue;
-            int dist = distance(single.center, other.center);
-            int xdist = abs(single.center.x - other.center.x);
-            if (dist < single.bound.height * 2 && xdist > 15) {
-                other.paired = true;
-                single.paired = true;
-                YellowTote tote(LONG_SIDE, (single.center.x + other.center.x) / 2,
-                                (single.center.y + other.center.y) / 2);
-                detected_totes.push_back(tote);
-                break;
-            }
-        }
-    }
-    return detected_totes;
+    piece_type = type;
 }
 
-std::vector<YellowTote> find_yellow_ir(Mat ir)
+//Accessors
+float Game_Piece::get_distance()
 {
-    std::vector<SingleL> singles;
-    Mat binary, draw;
-    cvtColor(ir, draw, CV_GRAY2BGR);
-    threshold(ir, binary, 250, 255, CV_THRESH_BINARY);
-    dilate(binary, binary, kern, Point(-1,-1), 3);
-    erode(binary, binary, kern, Point(-1,-1), 1);
-    vector<vector<Point> > contours;
-    vector<Vec4i> hierarchy;
-    imshow("morphed", binary);
-    findContours(binary, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
-    vector<vector<Point> > polygons(contours.size());
-    for (size_t i = 0; i < contours.size(); i++) {
-        vector<Point> contour = contours[i];
-        int area = contourArea(contour);
-        if (area > 100000 || area < 100) {
-            continue;
-        }
-        vector<Point> polygon;
-        approxPolyDP(contour, polygon, 5, true);
-        polygons[i] = polygon;
-        Rect bound = boundingRect(polygon);
-        RotatedRect rotated = minAreaRect(polygon);
-        rectangle(draw, bound, Scalar(78, 45, 68));
-
-        Point2f vertices[4];
-        rotated.points(vertices);
-        for (int i = 0; i < 4; i++) {
-            //~ line(draw, vertices[i], vertices[(i+1)%4], Scalar(0,255,0));
-        }
-        Moments moment = moments(contour, false);
-        Point2f massCenter(moment.m10/moment.m00, moment.m01/moment.m00);
-        double boxCenter = bound.x + (bound.width / 2.0);
-        line(draw, Point2f(boxCenter, 0), Point2f(boxCenter, 480), Scalar(0, 255, 0));
-        SingleL single;
-        single.center = massCenter;
-        single.bound = bound;
-        if (boxCenter - massCenter.x > 0) {
-            // closer to left side
-            putText(draw, "R", massCenter, CV_FONT_HERSHEY_SIMPLEX, 2, Scalar(255, 255, 255), 2);
-            single.side = RIGHT_SIDE;
-        } else {
-            putText(draw, "L", massCenter, CV_FONT_HERSHEY_SIMPLEX, 2, Scalar(255, 200, 255), 2);
-            single.side = LEFT_SIDE;
-        }
-        circle(draw, massCenter, 3, Scalar(0, 0, 255), 2);
-        //~ drawContours(draw, contours, i, Scalar(255, 0, 0));
-        //~ drawContours(draw, polygons, i, Scalar(255, 0, 255));
-        singles.push_back(single);
-    }
-    std::vector<YellowTote> detected_totes = pairTotes(singles);
-    // operation: split the detected totes into ones that look stacked and ones that aren't
-    /*The following code segment, that should be a seperate function,
-    checks to see if totes are stacked by comparing the x coordinates
-    If they are similar (<20 difference) they are considered stacked,
-    else they are considered unstacked*/
-
-    std::vector<YellowTote> stacked_totes, unstacked_totes;
-    printf("~~~~~~~~~~~~~~~~~~\n");
-    for (size_t tote_i = 0; tote_i < detected_totes.size(); tote_i++) {
-        for (size_t other_i = tote_i + 1; other_i < detected_totes.size(); other_i++) {
-            printf("Ti: %zu Oi: %zu X: %d Y: %d oX: %d oY: %d\n", tote_i, other_i, detected_totes[tote_i].x, detected_totes[tote_i].y, detected_totes[other_i].x, detected_totes[other_i].y);
-            if (abs(detected_totes[tote_i].x - detected_totes[other_i].x) < 20) {
-                if (!detected_totes[tote_i].paired) {
-                    detected_totes[tote_i].paired = true;
-                    stacked_totes.push_back(detected_totes[tote_i]);
-                }
-                if (!detected_totes[other_i].paired) {
-                    detected_totes[other_i].paired = true;
-                    stacked_totes.push_back(detected_totes[other_i]);
-                }
-            } else {
-                if (!detected_totes[tote_i].paired) {
-                    detected_totes[tote_i].paired = true;
-                    unstacked_totes.push_back(detected_totes[tote_i]);
-                }
-                if (!detected_totes[other_i].paired) {
-                    detected_totes[other_i].paired = true;
-                    unstacked_totes.push_back(detected_totes[other_i]);
-                }
-            }
-            break;
-        }
-    }
-    printf("stacked %zu unstacked %zu \n", stacked_totes.size(), unstacked_totes.size());
-    imshow("Drawing", draw);
-    //~ sort(detected_totes.begin(), detected_totes.end(), [] (YellowTote one, YellowTote two) {
-    //~ return one.center.y < two.center.y;
-    //~ });
-    return detected_totes;
+    return distance;
 }
 
-std::vector<YellowTote> find_yellow_color(cv::Mat img)
+float Game_Piece::get_xrot()
 {
-    std::vector<YellowTote> totes;
-    Mat hsv, binary, draw;
-    draw = img.clone();
-    cvtColor(img, hsv, CV_BGR2HSV);
-    inRange(hsv, Scalar(0, 158, 137), Scalar(30, 255, 255), binary);
-    erode(binary, binary, kern, Point(-1,-1), 1);
-    dilate(binary, binary, kern, Point(-1,-1), 1);
-    vector<vector<Point> > contours;
-    vector<Vec4i> hierarchy;
-    DEBUG_SHOW("binary image", binary);
-    findContours(binary, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
-    vector<vector<Point> > polygons(contours.size());
-    for (size_t i = 0; i < contours.size(); i++) {
-        vector<Point> contour = contours[i];
-        double area = contourArea(contour);
-        if (area > 100000 || area < 10000) {
-            continue;
-        }
-        drawContours(draw, contours, i, COLOR_RED);
-        vector<Point> polygon;
-        approxPolyDP(contour, polygon, 5, true);
-        polygons[i] = polygon;
-        drawContours(draw, polygons, i, COLOR_GREEN);
-        Rect bound = boundingRect(polygon);
-//        RotatedRect rotated = minAreaRect(polygon);
-        rectangle(draw, bound, COLOR_BLUE);
-//        Point2f vertices[4];
-//        rotated.points(vertices);
-//        for (int i = 0; i < 4; i++) {
-//            line(draw, vertices[i], vertices[(i+1)%4], COLOR_WHITE);
-//        }
-        Point2f center;
-        // check to see if the contour and the box have similar area
-        double areaRatio = area / bound.area();
-        double hwRatio = static_cast<double>(bound.height) / bound.width;
-        printf("CTR AR:%.2f HW:%.2f\n", areaRatio, hwRatio);
-        if (areaRatio > 0.80) {
-            // if it is close to 1, then we are seeing a face probably
-            // now check the height and width ratio
-            if ((hwRatio > 0.6 && hwRatio < 1)) {
-                // it's the square short side
-                Moments moment = moments(contour, false);
-                center = Point2f(moment.m10/moment.m00, moment.m01/moment.m00);
-            } else {
-                puts("LONG SIDE");
-                // it's the long side
-                continue; // todo: return xrot as 90
-            }
-        } else {
-            // if not, then we are seeing the box on the corner
-            puts("CORNER BOX");
-            continue; // possible solution: split the boxes in half
-        }
-        Point2f centerRebased(center.x - (img.cols / 2.), center.y - (img.rows / 2.));
-        // find the x rotation
-        double xrot = (centerRebased.x / (img.cols / 2.)) * (fov.x / 2.);// - (fov.x / 2.);
-        putText(draw, "XROT: " + to_string(xrot), center, CV_FONT_HERSHEY_PLAIN, 1, COLOR_RED, 1);
-        putText(draw, "AR: " + to_string(areaRatio), center + Point2f(0, 20), CV_FONT_HERSHEY_PLAIN, 1, COLOR_RED, 1);
-        putText(draw, "HW: " + to_string(hwRatio), center + Point2f(0, 40), CV_FONT_HERSHEY_PLAIN, 1, COLOR_RED, 1);
+    return x_rot;
+}
 
-    }
-    fflush(stdout);
-    DEBUG_SHOW("Processed", draw);
-    return totes;
+float Game_Piece::get_ratio()
+{
+    return ratio;
+}
+
+bool Game_Piece::get_totes_high()
+{
+    return totes_high;
+}
+
+int Game_Piece::get_piece_type()
+{
+    return piece_type;
+}
+
+void Display_Game_Piece(Game_Piece object, Mat img, Point origin)
+{
+    char str[50];
+    sprintf(str, "Ratchet Rockers 1706");
+    putText(img, str,Point(origin.x+15, origin.y), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_RED,1,8,false);
+
+    sprintf(str, "XRot  = %.2f", object.get_xrot());
+    putText(img, str,Point(origin.x+15, origin.y+20), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_RED,1,8,false);
+
+    sprintf(str, "Distance = %.2f",object.get_distance());
+    putText(img, str,Point(origin.x+15, origin.y+40), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_RED,1,8,false);
+
+    sprintf(str, "Ratio = %.2f",object.get_ratio());
+    putText(img, str,Point(origin.x+15, origin.y+60), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_RED,1,8,false);
+
+    sprintf(str, "Game Piece type = %d",object.get_piece_type());
+    putText(img, str,Point(origin.x+15, origin.y+80), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_RED,1,8,false);
+
+    sprintf(str, "Totes high = %d",object.get_totes_high());
+    putText(img, str,Point(origin.x+15, origin.y+100), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_RED,1,8,false);
+}
+
+//Class Yellow Tote functions
+YellowTote::YellowTote(Side side) : facing_Side(side), area_ratio(-1), xrot(-99), stack_height(-1), center(cv::Point2f(-999,-999))
+{
+}
+
+//mutalators
+void YellowTote::set_side(Side s)
+{
+    facing_Side = s;
+}
+
+void YellowTote::set_ratio(double ratio)
+{
+    area_ratio = ratio;
+}
+
+void YellowTote::set_xrot(double rotation)
+{
+    xrot = rotation;
+}
+
+void YellowTote::set_stacked(int stacked)
+{
+    stack_height = stacked;
+}
+
+void YellowTote::set_center(Point2f c)
+{
+    center.x = c.x;
+    center.y = c.y;
+}
+
+//accessors
+Side YellowTote::get_side()
+{
+    return facing_Side;
+}
+
+double YellowTote::get_ratio()
+{
+    return area_ratio;
+}
+
+double YellowTote::get_xrot()
+{
+    return xrot;
+}
+
+int YellowTote::get_stacked()
+{
+    return stack_height;
+}
+
+cv::Point2f YellowTote::get_center()
+{
+    return center;
+}
+
+float YellowTote::get_center_x()
+{
+    return center.x;
+}
+
+float YellowTote::get_center_y()
+{
+    return center.y;
+}
+
+bool operator==(YellowTote& one, YellowTote& two)
+{
+    return one.get_center_x() == two.get_center_x() && one.get_center_y() == two.get_center_y();
+}
+
+void Display_YellowTote(YellowTote tote, Mat img, Point origin)
+{
+    char str[50];
+    sprintf(str, "Ratchet Rockers 1706");
+    putText(img, str,Point(origin.x+15, origin.y), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_RED,1,8,false);
+
+    sprintf(str, "Side  = %d", tote.get_side());
+    putText(img, str,Point(origin.x+15, origin.y+20), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_RED,1,8,false);
+
+    sprintf(str, "Ratio = %.2f",tote.get_ratio());
+    putText(img, str,Point(origin.x+15, origin.y+40), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_RED,1,8,false);
+
+    sprintf(str, "xrot = %.2f",tote.get_xrot());
+    putText(img, str,Point(origin.x+15, origin.y+60), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_RED,1,8,false);
+
+    sprintf(str, "Stacked = %d",tote.get_stacked());
+    putText(img, str,Point(origin.x+15, origin.y+80), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_RED,1,8,false);
 }
