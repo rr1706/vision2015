@@ -53,8 +53,4 @@ void UdpSender::send(int data1)
 
         close(sock);
     }
-
-    if (rp == NULL) {               /* No address succeeded */
-        throw std::runtime_error("Failed to connect to RoboRIO");
-    }
 }
