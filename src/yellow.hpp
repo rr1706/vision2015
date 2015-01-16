@@ -10,10 +10,11 @@ class Game_Piece {
 private:
     float x_rot;
     float distance;
-    float ratio;
+    float rotation;
     int totes_high;
     //ints, -1 = default, 1 = gray tote, 2 = yellow tote, 3 = bin
     int piece_type;
+    bool green_bin_top;
 
 public:
     Game_Piece(); // constructor
@@ -21,16 +22,18 @@ public:
     //mutalators
     void set_xrot(float xrot);
     void set_distance(float distance);
-    void set_ratio(float rat);
+    void set_rotation(float r0t);
     void set_totes_high(int stacks);
     void set_piece_type(int type);
+    void set_green_bin(bool on_top);
 
     //accessors
     float get_xrot();
     float get_distance();
-    float get_ratio();
+    float get_rotation();
     bool get_totes_high();
     int get_piece_type();
+    bool get_green_bin();
 
     friend void Display_Game_Piece(const Game_Piece object, cv::Mat img, cv::Point origin);
 };
@@ -43,13 +46,14 @@ enum Side {
 
 class YellowTote {
 private:
-    Side facing_Side;
     double area_ratio;
+    Side facing_Side;
     double xrot;
     int stack_height;
     cv::Point2f center;
 
 public:
+    YellowTote();
     YellowTote(Side side); //constructor
 
     //mutalators
@@ -69,10 +73,10 @@ public:
     float get_center_y();
 
     //functions
-    //overloading the extraction operator, but prints it out on the image at point origin
     friend void Display_YellowTote(const YellowTote tote, cv::Mat img, cv::Point origin);
-
+    YellowTote operator=(YellowTote tote);
     friend bool operator==(YellowTote& one, YellowTote& two);
+    friend bool operator!=(YellowTote& one, YellowTote& two);
 
 };
 

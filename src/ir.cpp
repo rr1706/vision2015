@@ -12,6 +12,9 @@ vector<YellowTote> IRTracker::find_totes(Mat img)
 {
     std::vector<SingleL> singles;
     Mat draw;
+
+    char str[50];
+
     cvtColor(img, draw, CV_GRAY2BGR);
 
     threshold(img, img, 250, 255, CV_THRESH_BINARY);
@@ -31,13 +34,15 @@ vector<YellowTote> IRTracker::find_totes(Mat img)
             continue;
         }
 
+        //todo:check to make sure a contour isn't an overlapping object
+
         Rect bound = boundingRect(contour);
         rectangle(draw, bound, Scalar(78, 45, 68));
 
         Point2f massCenter = Calculate_Center(contour);
         Point2f boxCenter = Point2f(bound.x + (bound.width / 2.0), bound.y + (bound.height / 2.0));
 
-        //line(draw, Point2f(boxCenter, 0), Point2f(boxCenter, 480), Scalar(0, 255, 0));
+        //declare and populate a SingleL with the appropriate values
         SingleL single_l;
         single_l.center = massCenter;
         single_l.bound = bound;
@@ -47,33 +52,63 @@ vector<YellowTote> IRTracker::find_totes(Mat img)
 
         singles.push_back(single_l);
     }
+    
     std::vector<YellowTote> detected_totes = pairTotes(singles);
 
     //split the detected totes into ones that look stacked and ones that aren't
-    vector<YellowTote> stacked_totes;
+    vector<vector<YellowTote> > stacked_totes(detected_totes.size() / 2, std::vector<YellowTote>(detected_totes.size()));
     vector<YellowTote> unstacked_totes;
 
     //Determine if a tote is stacked or not
     determine_stacked(detected_totes, stacked_totes, unstacked_totes, draw);
 
-    //Figure out xrot and populate it
-    if(stacked_totes.size() != 0)
+    //populate xrot for stacked_totes
+    for(unsigned int i = 0; i < stacked_totes.size(); i++)
     {
-        for(unsigned int i = 0; i < stacked_totes.size(); i++)
+        for(unsigned int j = 0; j < stacked_totes[i].size(); j++)
         {
-            stacked_totes[i].set_xrot(Calculate_Xrot(stacked_totes[i].get_center()));
+            stacked_totes[i][j].set_xrot(Calculate_Xrot(stacked_totes[i][j].get_center()));
         }
     }
+
+    //populate xrot for unstacked totes
     for(unsigned int i = 0; i < unstacked_totes.size(); i ++)
     {
         unstacked_totes[i].set_xrot(Calculate_Xrot(unstacked_totes[i].get_center()));
     }
 
+    //Display stacked_totes
+    for(unsigned int i = 0; i < stacked_totes.size(); i++)
+    {
+        for(unsigned int j = 0; j < stacked_totes[i].size(); j++)
+        {
+            //do not draw to the junk points
+            if (stacked_totes[i][j].get_stacked() == 0)
+            {
+                continue;
+            }
+            if (stacked_totes[i][j].get_stacked() == 0)
+            {
+                continue;
+            }
+
+            Display_YellowTote(stacked_totes[i][j], draw, stacked_totes[i][j].get_center());
+        }
+    }
+    //display unstacked_totes
+    for(unsigned int i = 0; i < unstacked_totes.size(); i++)
+    {
+        Display_YellowTote(unstacked_totes[i], draw, unstacked_totes[i].get_center());
+    }
+
+    //Branding :D
+    sprintf(str, "Ratchet Rockers 1706");
+    putText(draw, str,Point(1100, 15), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_BLUE,1,8,false);
+
+    //send stacked_totes[i][max] and all of unstacked_totes to RoboRio
+
     imshow("Drawing", draw);
     imwrite("Final.jpeg", draw);
 
-    //send game_pieces that do not have the default values to savannah
-
     return detected_totes;
-    //maybe this function should be a void and do all the udp stuff inside the function.
 }

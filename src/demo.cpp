@@ -4,6 +4,7 @@
 #include "yellow.hpp"
 #include "functions.h"
 #include "tracker.hpp"
+#include "util.hpp"
 
 using namespace cv;
 using namespace std;
@@ -44,7 +45,7 @@ int irtest() {
     while (true) {
         ///Acquire image
         //img = kinectDepth(0);
-        img = imread("/home/hunter/work/vision2015-master/images/ir.png", CV_LOAD_IMAGE_GRAYSCALE);
+        img = imread("../images/ir.png", CV_LOAD_IMAGE_GRAYSCALE);
         int key = waitKey(1) & 0xFF;
         if (key == 27)
             break;
@@ -63,6 +64,60 @@ int irtest() {
     return 0;
 }
 
+int depth() {
+    Mat img;
+    namedWindow("Drawing", CV_WINDOW_AUTOSIZE);
+    //namedWindow("Calibrated", CV_WINDOW_AUTOSIZE);
+    DECLARE_TIMING(Timer);
+    START_TIMING(Timer);
+    double frame_time_ms;
+    DepthTracker tracker;
+    while (true) {
+        ///Acquire image
+        img = kinectDepth(0);
+        int key = waitKey(1) & 0xFF;
+        if (key == 27)
+            break;
+        vector<Game_Piece> game_pieces = tracker.find_pieces(img, key);
+        //vector<YellowTote> totes = find_yellow_color(img);
+        //vector<YellowTote> totes_= tracker.find_totes(img);
+        STOP_TIMING(Timer);
+        frame_time_ms = GET_TIMING(Timer);
+        if (frame_time_ms > 0) {
+            //printf("Current FPS = %.1f\n", 1000/frame_time_ms);
+        }
+        START_TIMING(Timer);
+
+    }
+    cv::destroyAllWindows();
+    return 0;
+}
+
+int basictimer()
+{
+    pdebug("Starting in basic kinect color capture mode..\n");
+    Mat img;
+    DECLARE_TIMING(Timer);
+    START_TIMING(Timer);
+    double frame_time_ms;
+    while (true) {
+        img = kinectRGB(0);
+        imshow("Image", img);
+        int key = waitKey(1);
+        if ((key & 0xFF) == 27) {
+            break;
+        }
+        STOP_TIMING(Timer);
+        frame_time_ms = GET_TIMING(Timer);
+        if (frame_time_ms > 0) {
+            pdebug("Current FPS = %.1f\n", 1000/frame_time_ms);
+        }
+        START_TIMING(Timer);
+    }
+    destroyAllWindows();
+    return 0;
+}
+
 int main() {
-    return imdir();
+    return depth();
 }

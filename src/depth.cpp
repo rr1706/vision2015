@@ -8,15 +8,15 @@
 using namespace cv;
 using namespace std;
 
-std::vector<Game_Piece> find_with_depth(Mat img, int key)
+std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, int key)
 {
-    Mat calibrate, calibrated, thresholded, thresholded2, depth_mat2, dst, detected_edges,drawing;
+    Mat calibrate, calibrated, thresholded, thresholded2, dst, detected_edges, drawing;
 
-    calibrate = imread("Calibrate.png", CV_LOAD_IMAGE_GRAYSCALE);
+    calibrate = imread("./Calibrate.png", CV_LOAD_IMAGE_GRAYSCALE);
 
     convertScaleAbs(img, img, 0.25, 0);
 
-    img = imread("raw.jpeg", CV_LOAD_IMAGE_GRAYSCALE);
+    //img = imread("raw.jpeg", CV_LOAD_IMAGE_GRAYSCALE);
 
     //imwrite("raw.jpeg", img);
 
@@ -26,6 +26,13 @@ std::vector<Game_Piece> find_with_depth(Mat img, int key)
     calibrated = calibrate - img-1;
     threshold(calibrated, thresholded, 1, 255, CV_THRESH_BINARY_INV);
     thresholded2 = img - thresholded;
+
+    //Blur the image to smooth it
+    blur(thresholded2, thresholded2, Size(3,3), Point(-1,-1), BORDER_CONSTANT);
+
+    //Eliminate Noise
+    erode(thresholded2, thresholded2 ,1, Point(0,0), 1, BORDER_CONSTANT,morphologyDefaultBorderValue());
+    dilate(thresholded2, dst ,1,Point(0,0),1, BORDER_CONSTANT,morphologyDefaultBorderValue());
 
     /// Create a matrix of the same type and size as depth_mat (for dst)
     dst.create( thresholded2.size(), thresholded2.type() );
@@ -50,11 +57,6 @@ std::vector<Game_Piece> find_with_depth(Mat img, int key)
 
     vector<Game_Piece> game_piece;
 
-    ///Make sure these Mat is empty
-    //dst = Scalar::all(0);
-
-    //depth.copyTo( dst, detected_edges);
-
     cvtColor(img, drawing, CV_GRAY2RGB);
 
     vector<vector<Point> > contours;
@@ -64,50 +66,52 @@ std::vector<Game_Piece> find_with_depth(Mat img, int key)
 
     findContours(dst, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE, Point(0, 0) );
 
-    vector<vector<Point> > contours_poly( contours.size() );
     Rect boundRect;
 
     for( unsigned int i = 0; i < contours.size(); i++ )
     {
         if(contourArea(contours[i])>2500 && contourArea(contours[i]) < 500000)
         {
+            //todo: differentiate between two objects that are overlapping
+            //Calculate average distance to a contour (by averaging the distance to every pixel in the contour
+            //vector<float> ave_distance = Average_Distance(depth, contours, boundRect);
 
             //calculate the center of the contour using nth order (1st order) moments
-            //brush up on that calculus
             Point2f center = Calculate_Center(contours[i]);
+
+            Point left = get_min_x(contours[i]);
+            Point right = get_max_x(contours[i]);
+            Point closest = get_closest_point(img, contours[i]);
+            Point bottom = get_max_y(contours[i]);
+            Point top = get_min_y(contours[i]);
+
+            circle(drawing, top, 2, COLOR_RED, 1, 8, 0);
+            circle(drawing, bottom, 2, COLOR_RED, 1, 8, 0);
 
             //Find distance based off pixel intensity
             double distance = Calculate_Real_Distance(img, center);
 
             //Check color to tell what game piece, if any, we are looking at.
-            Determine_Game_Piece(center, unknown_game_piece);
-
-            //Calculate bounding rectangle to calculate height vs width ratio
-            boundRect = boundingRect(contours[i]);
-            float ratio = static_cast<float>(boundRect.height) / boundRect.width;
-            Point2f top_of_contour = Point2f(boundRect.x + boundRect.width/2,boundRect.y + 15);
-            circle(drawing, top_of_contour, 2, COLOR_RED, 1, 8, 0);
-
-            if(unknown_game_piece.get_piece_type() == 1 || unknown_game_piece.get_piece_type() == 2)
-            {
-                find_number_of_totes(img, unknown_game_piece, center, top_of_contour);
-            }
+            Determine_Game_Piece(center, unknown_game_piece, contours[i]);
 
             //draw what we know
             drawContours(img, contours,i, COLOR_RED, 3, 8, hierarchy, 0, Point() );
             rectangle(drawing, boundRect.tl(), boundRect.br(), COLOR_RED, 2, 8, 0 );
             circle(drawing, center, 2, COLOR_RED, 1, 8, 0);
 
-            //todo: differentiate between two objects that are overlapping
-            //Calculate average distance to a contour (by averaging the distance to every pixel in the contour
-            //vector<float> ave_distance = Average_Distance(depth, contours, boundRect);
+            //check to see if the game piece is a tote
+            if(unknown_game_piece.get_piece_type() == 1 || unknown_game_piece.get_piece_type() == 2)
+            {
+                //Determine stack height
+                find_number_of_totes(img, unknown_game_piece, center, top);
 
-            double xrot = Calculate_Xrot(center);
+                //Determine offset
+                unknown_game_piece.set_rotation(find_orientation(img, left, closest, right));
+            }
 
             //Populate our class with values that we calculated
-            unknown_game_piece.set_xrot(xrot);
+            unknown_game_piece.set_xrot(Calculate_Xrot(center));
             unknown_game_piece.set_distance(distance);
-            unknown_game_piece.set_ratio(ratio);
 
             game_piece.push_back(unknown_game_piece);
 

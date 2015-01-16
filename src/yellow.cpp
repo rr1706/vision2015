@@ -10,7 +10,7 @@ using namespace std;
 using namespace cv;
 
 //Class Game Piece functions
-Game_Piece::Game_Piece() : x_rot(99), distance(-1), totes_high(-1), piece_type(-1)
+Game_Piece::Game_Piece() : x_rot(99), distance(-1), totes_high(-1),rotation(-99), piece_type(-1), green_bin_top(false)
 {
 }
 
@@ -25,9 +25,9 @@ void Game_Piece::set_distance(float d)
     distance = d;
 }
 
-void Game_Piece::set_ratio(float rat)
+void Game_Piece::set_rotation(float rot)
 {
-    ratio = rat;
+    rotation = rot;
 }
 
 void Game_Piece::set_totes_high(int stacks)
@@ -38,6 +38,11 @@ void Game_Piece::set_totes_high(int stacks)
 void Game_Piece::set_piece_type(int type)
 {
     piece_type = type;
+}
+
+void Game_Piece::set_green_bin(bool on_top)
+{
+    green_bin_top = on_top;
 }
 
 //Accessors
@@ -51,9 +56,9 @@ float Game_Piece::get_xrot()
     return x_rot;
 }
 
-float Game_Piece::get_ratio()
+float Game_Piece::get_rotation()
 {
-    return ratio;
+    return rotation;
 }
 
 bool Game_Piece::get_totes_high()
@@ -66,30 +71,38 @@ int Game_Piece::get_piece_type()
     return piece_type;
 }
 
+bool Game_Piece::get_green_bin()
+{
+    return green_bin_top;
+}
+
 void Display_Game_Piece(Game_Piece object, Mat img, Point origin)
 {
     char str[50];
     sprintf(str, "Ratchet Rockers 1706");
-    putText(img, str,Point(origin.x+15, origin.y), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_RED,1,8,false);
+    putText(img, str,Point(origin.x+15, origin.y), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_BLUE,1,8,false);
 
     sprintf(str, "XRot  = %.2f", object.get_xrot());
-    putText(img, str,Point(origin.x+15, origin.y+20), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_RED,1,8,false);
+    putText(img, str,Point(origin.x+15, origin.y+20), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_BLUE,1,8,false);
 
     sprintf(str, "Distance = %.2f",object.get_distance());
-    putText(img, str,Point(origin.x+15, origin.y+40), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_RED,1,8,false);
+    putText(img, str,Point(origin.x+15, origin.y+40), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_BLUE,1,8,false);
 
-    sprintf(str, "Ratio = %.2f",object.get_ratio());
-    putText(img, str,Point(origin.x+15, origin.y+60), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_RED,1,8,false);
+    sprintf(str, "Rotation = %.2f",object.get_rotation());
+    putText(img, str,Point(origin.x+15, origin.y+60), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_BLUE,1,8,false);
 
     sprintf(str, "Game Piece type = %d",object.get_piece_type());
-    putText(img, str,Point(origin.x+15, origin.y+80), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_RED,1,8,false);
+    putText(img, str,Point(origin.x+15, origin.y+80), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_BLUE,1,8,false);
 
     sprintf(str, "Totes high = %d",object.get_totes_high());
-    putText(img, str,Point(origin.x+15, origin.y+100), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_RED,1,8,false);
+    putText(img, str,Point(origin.x+15, origin.y+100), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_BLUE,1,8,false);
+
+    sprintf(str, "Green bin on top? = %d",object.get_green_bin());
+    putText(img, str,Point(origin.x+15, origin.y+120), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_BLUE,1,8,false);
 }
 
 //Class Yellow Tote functions
-YellowTote::YellowTote(Side side) : facing_Side(side), area_ratio(-1), xrot(-99), stack_height(-1), center(cv::Point2f(-999,-999))
+YellowTote::YellowTote(Side side) :  area_ratio(-1), facing_Side(side), xrot(-99), stack_height(-1), center(cv::Point2f(-999,-999))
 {
 }
 
@@ -164,18 +177,38 @@ bool operator==(YellowTote& one, YellowTote& two)
 void Display_YellowTote(YellowTote tote, Mat img, Point origin)
 {
     char str[50];
-    sprintf(str, "Ratchet Rockers 1706");
-    putText(img, str,Point(origin.x+15, origin.y), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_RED,1,8,false);
-
-    sprintf(str, "Side  = %d", tote.get_side());
-    putText(img, str,Point(origin.x+15, origin.y+20), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_RED,1,8,false);
 
     sprintf(str, "Ratio = %.2f",tote.get_ratio());
-    putText(img, str,Point(origin.x+15, origin.y+40), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_RED,1,8,false);
+    putText(img, str,Point(origin.x+15, origin.y+35), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_BLUE,1,8,false);
 
     sprintf(str, "xrot = %.2f",tote.get_xrot());
-    putText(img, str,Point(origin.x+15, origin.y+60), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_RED,1,8,false);
+    putText(img, str,Point(origin.x+15, origin.y+55), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_BLUE,1,8,false);
 
     sprintf(str, "Stacked = %d",tote.get_stacked());
-    putText(img, str,Point(origin.x+15, origin.y+80), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_RED,1,8,false);
+    putText(img, str,Point(origin.x+15, origin.y+75), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_BLUE,1,8,false);
+}
+
+YellowTote YellowTote::operator=(YellowTote tote)
+{
+    center = tote.get_center();
+    area_ratio = tote.get_ratio();
+    facing_Side = tote.get_side();
+    xrot = tote.get_xrot();
+    stack_height = tote.get_stacked();
+    return *this;
+}
+
+YellowTote::YellowTote()
+{
+    this->area_ratio = 0;
+    this->center = Point2f(0, 0);
+    this->facing_Side = UNK_SIDE;
+    this->stack_height = 0;
+    this->xrot = 180;
+
+}
+
+bool operator !=(YellowTote& one, YellowTote& two)
+{
+    return !(one == two);
 }

@@ -10,19 +10,16 @@
 using namespace cv;
 using namespace std;
 
-//Returns the distance between two floating points.
 double distance(Point2f one, Point2f two)
 {
     return sqrt(pow(one.x - two.x, 2) + pow(one.y - two.y, 2));
 }
 
-//Returns the distance between the camera and Point center
 double Calculate_Real_Distance(Mat img, Point2f center) {
     Scalar intensity = img.at<uchar>(center);
     return 0.1236 * tan(intensity[0]*4 / 2842.5 + 1.1863)*100;
 }
 
-//Determines the center of the contour passed to it
 Point2f Calculate_Center(vector<Point> contour)
 {
     Moments mu;
@@ -30,21 +27,6 @@ Point2f Calculate_Center(vector<Point> contour)
     return Point2f(mu.m10/mu.m00, mu.m01/mu.m00);
 }
 
-//Preforms blur, erode and dilate on src
-//And populates the result in dst
-void Process_Image(Mat src, Mat dst)
-{
-    //Blur the image to smooth it
-    blur(src, src, Size(3,3), Point(-1,-1), BORDER_CONSTANT);
-
-    //Eliminate Noise
-    erode(src, src ,1, Point(0,0), 1, BORDER_CONSTANT,morphologyDefaultBorderValue());
-    dilate(src, dst ,1,Point(0,0),1, BORDER_CONSTANT,morphologyDefaultBorderValue());
-}
-
-//Calibrates the image such that the constant
-//environment is removed, leaving only the new
-//objects.
 void Calibrate_Image(Mat src, Mat depth, Mat dst)
 {
     convertScaleAbs(src, depth, 0.25, 0);
@@ -58,23 +40,26 @@ void Calibrate_Image(Mat src, Mat depth, Mat dst)
     dst = depth - thresholded;
 }
 
-//Converts degrees to radians
 double cvt2rad(double degree)
 {
     return degree * CV_PI / 180;
 }
 
-//Determines if the object is a yellow tote, gray tote, or green bin
-void Determine_Game_Piece(Point2f center, Game_Piece& unknown_game_piece)
+double cvt2degree(double radian)
+{
+    return radian*180/CV_PI;
+}
+
+void Determine_Game_Piece(Point2f center, Game_Piece& unknown_game_piece, vector<Point> contour)
 {
     char str[50];
-    //Mat img = kinectRGB(0);
-    Mat img = imread("color.jpeg", CV_LOAD_IMAGE_COLOR);
+    Mat img = kinectRGB(0);
     cvtColor(img, img, CV_BGR2RGB);
     Vec3b color = img.at<Vec3b>(center);
-    //Scalar color = Vec3b2Scalar(color_at_center);
 
-    //imwrite("color.jpeg", img);
+    Point bottom = get_max_y(contours[i]);
+    Point top = get_min_y(contours[i]);
+
     sprintf(str, "r  = %d", color[0]);
     putText(img, str,Point(15, 35), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_WHITE,1,8,false);
     sprintf(str, "g  = %d", color[1]);
@@ -115,11 +100,19 @@ void Determine_Game_Piece(Point2f center, Game_Piece& unknown_game_piece)
         unknown_game_piece.set_piece_type(3);
     }
 
+    if(unknown_game_piece.get_piece_type() ==1 && green_bin_top(img, top))
+    {
+        unknown_game_piece.set_green_bin(true);
+    }
+    if(unknown_game_piece.get_piece_type(3) && tote_on_bottom(img, bottom))
+    {
+        unknown_game_piece.set_piece_type(1);
+    }
+
     imshow("RGB", img);
     return;
 }
 
-//Determines amount of totes stacked
 void find_number_of_totes(Mat img, Game_Piece& tote, Point2f center, Point2f height)
 {
     double diff = abs(center.y - height.y);
@@ -129,28 +122,70 @@ void find_number_of_totes(Mat img, Game_Piece& tote, Point2f center, Point2f hei
     float distance_to_top = 0.1236 * tan(intensity[0]*4 / 2842.5 + 1.1863)*100;
     float real_height =  2*sin(yrot)*distance_to_top;
     printf("real height = %.2f\n", real_height);
-    if(real_height <= single_stack_height + height_tolerance && real_height >= single_stack_height - height_tolerance)
+    //Check heights
+    if(tote.get_green_bin() == false) //no green bin on top
     {
-        tote.set_totes_high(99);
-        printf("%d\n", tote.get_totes_high());
+        if(real_height <= single_stack_height + height_tolerance && real_height >= single_stack_height - height_tolerance)
+        {
+            tote.set_totes_high(1);
+        }
+        else if(real_height <= double_stack_height + height_tolerance && real_height >= double_stack_height - height_tolerance)
+        {
+            tote.set_totes_high(2);
+        }
+        else if(real_height <= triple_stack_height + height_tolerance && real_height >= triple_stack_height - height_tolerance)
+        {
+            tote.set_totes_high(3);
+        }
+        else if(real_height <= quad_stack_height + height_tolerance && real_height >= quad_stack_height - height_tolerance)
+        {
+            tote.set_totes_high(4);
+        }
+        else if(real_height <= penta_stack_height + height_tolerance && real_height >= penta_stack_height - height_tolerance)
+        {
+            tote.set_totes_high(5);
+        }
+        else if(real_height <= hexa_stack_height + height_tolerance && real_height >= hexa_stack_height - height_tolerance)
+        {
+            tote.set_totes_high(6);
+        }
     }
-    else if(real_height <= double_stack_height + height_tolerance && real_height >= double_stack_height - height_tolerance)
+    else //green bin on top
     {
-        tote.set_totes_high(20);
-        printf("%d\n", tote.get_totes_high());
-        printf("test passed\n");
+        if(real_height <= single_stack_height + bin_height +height_tolerance &&
+                real_height >= single_stack_height + bin_height - height_tolerance)
+        {
+            tote.set_totes_high(1);
+        }
+        else if(real_height <= double_stack_height + bin_height + height_tolerance &&
+                real_height >= double_stack_height + bin_height - height_tolerance)
+        {
+            tote.set_totes_high(2);
+        }
+        else if(real_height <= triple_stack_height + bin_height + height_tolerance &&
+                real_height >= triple_stack_height + bin_height - height_tolerance)
+        {
+            tote.set_totes_high(3);
+        }
+        else if(real_height <= quad_stack_height + bin_height + height_tolerance &&
+                real_height >= quad_stack_height + bin_height - height_tolerance)
+        {
+            tote.set_totes_high(4);
+        }
+        else if(real_height <= penta_stack_height + bin_height + height_tolerance &&
+                real_height >= penta_stack_height + bin_height - height_tolerance)
+        {
+            tote.set_totes_high(5);
+        }
+        else if(real_height <= hexa_stack_height + bin_height + height_tolerance &&
+                real_height >= hexa_stack_height + bin_height - height_tolerance)
+        {
+            tote.set_totes_high(6);
+        }
     }
-    else if(real_height <= triple_stack_height + height_tolerance && real_height >= triple_stack_height - height_tolerance)
-    {
-        tote.set_totes_high(3);
-        printf("%d\n", tote.get_totes_high());
-    }
-    //todo:4, 5 and 6 totes high
-
     return;
 }
 
-//Captures current frame for the new calibration image
 void Get_Calibration_Image(Mat img, int key)
 {
     if (key == 's') //s key pressed
@@ -162,8 +197,6 @@ void Get_Calibration_Image(Mat img, int key)
     return;
 }
 
-//Calculates degrees between the point passed
-//and the center of the image
 double Calculate_Xrot(Point2f center)
 {
     //remap the center from top left to center of top
@@ -171,65 +204,93 @@ double Calculate_Xrot(Point2f center)
 
     // Calculate angle to center of box
     double Xrot = center.x/(Image_Width/2)*fov.x/2;
+    center.x = (center.x + Image_Width/2);
 
     return Xrot;
 }
 
-//Determines if the L is a left or right L
 void Calculate_side(SingleL L, Point2f center, Mat img)
 {
     if (center.x - L.center.x > 0)
     {
         // closer to left side
-        putText(img, "R", center, CV_FONT_HERSHEY_SIMPLEX, 2, COLOR_BLUE, 2);
+        putText(img, "R", Point2f(center.x + 10, center.y - 10), CV_FONT_HERSHEY_SIMPLEX, .75, COLOR_BLUE, 2);
         L.side = RIGHT_SIDE;
     } else
     {
-        putText(img, "L", center, CV_FONT_HERSHEY_SIMPLEX, 2, COLOR_BLUE, 2);
+        putText(img, "L", Point2f(center.x - 15, center.y - 10), CV_FONT_HERSHEY_SIMPLEX, .75, COLOR_BLUE, 2);
         L.side = LEFT_SIDE;
     }
     circle(img, center, 3, COLOR_BLUE, 2);
     return;
 }
 
-//needs to be changed so stacked_totes is a vector vector to account for multiple stacks
-//and it needs to be able to draw a line from the bottom tote to the top tote in the
-//stacked totes second list
-//Populates stacked_totes and unstacked_totes with the approapriate detected_totes
-void determine_stacked(vector<YellowTote>& detected_totes, vector<YellowTote>&  stacked_totes, vector<YellowTote>& unstacked_totes, Mat img)
+void determine_stacked( vector<YellowTote> detected_totes, vector< vector<YellowTote> >& stacked_totes, vector<YellowTote>& unstacked_totes, Mat img)
+
 {
     for (size_t tote_i = 0; tote_i < detected_totes.size(); tote_i++)
     {
+        int level = 1;
         for (size_t other_i =  tote_i + 1; other_i < detected_totes.size(); other_i++)
         {
             if (abs(detected_totes[tote_i].get_center_x() - detected_totes[other_i].get_center_x()) < 20)
             {
-                if (!detected_totes[tote_i].get_stacked())
+                if (detected_totes[tote_i].get_stacked() == -1)
                 {
-                    detected_totes[tote_i].set_stacked(true);
-                    stacked_totes.push_back(detected_totes[tote_i]);
+                    detected_totes[tote_i].set_stacked(level);
+                    stacked_totes[tote_i][level] = detected_totes[tote_i];
+                    level++;
                 }
-                if (!detected_totes[other_i].get_stacked())
+                if (detected_totes[other_i].get_stacked() == -1)
                 {
-                    detected_totes[other_i].set_stacked(true);
-                    stacked_totes.push_back(detected_totes[other_i]);
+                    detected_totes[other_i].set_stacked(level);
+                    stacked_totes[tote_i][level] = detected_totes[other_i];
+                    level++;
                 }
             }
         }
     }
     for (unsigned int i = 0; i < detected_totes.size(); i ++)
     {
-        if(!detected_totes[i].get_stacked())
+        if(detected_totes[i].get_stacked() == -1)
         {
+            circle(img, Point(detected_totes[i].get_center_x(), detected_totes[i].get_center_y()), 3, COLOR_BLUE);
+            detected_totes[i].set_stacked(1);
             unstacked_totes.push_back(detected_totes[i]);
         }
     }
 
-    //I think I got it to draw from the bottom of the stack to the top, it is untested though -_-
-    for(unsigned int i = 0; i < stacked_totes.size()-1; i ++)
+
+
+    for(unsigned int i = 0; i < stacked_totes.size(); i++)
     {
-        circle(img, Point(stacked_totes[0].get_center_x(), stacked_totes[0].get_center_y()), 3, COLOR_BLUE);
-        line(img, Point((int)stacked_totes[0].get_center_x(), (int)stacked_totes[0].get_center_y()), Point((int)stacked_totes[1].get_center_x(), (int)stacked_totes[1].get_center_y()), COLOR_BLUE, 2);
+        for(unsigned int j = 0; j < stacked_totes[i].size(); j++)
+        {
+            //figure out if the variable is junk
+            if(stacked_totes[i][j].get_center_x() == 0)
+            {
+                //it is junk, get rid of it in the vector
+                stacked_totes[i].erase(stacked_totes[i].begin()+j);
+            }
+        }
+    }
+
+    //draw a line down the middle of the stack if one exists
+    for(unsigned int i = 0; i < stacked_totes.size(); i++)
+    {
+        for(unsigned int j = 0; j < stacked_totes[i].size()-1; j++)
+        {
+            //do not draw to the junk points
+            if (stacked_totes[i][j].get_stacked() == 0) {
+                continue;
+            }
+            if (stacked_totes[i][j + 1].get_stacked() == 0) {
+                continue;
+            }
+
+            circle(img, stacked_totes[i][j].get_center(), 3, COLOR_BLUE);
+            line(img, stacked_totes[i][j].get_center(), stacked_totes[i][j+1].get_center(), COLOR_BLUE, 2);
+        }
     }
 
     return;
@@ -248,7 +309,168 @@ void determine_stacked(vector<YellowTote>& detected_totes, vector<YellowTote>&  
 //    }
 //}
 
-//Matches SingleLs, returns vector of YellowTotes
+//someone make a document with a step by step process of this math
+//and put it somewhere online so we can link to it in a comment.
+double find_orientation(Mat img, Point2f left, Point2f center, Point2f right)
+{
+    double theta_3 = -99;
+    //is left or right side the long side?
+    //Zac's function will do this for me.
+    //get the distances to the 3 points
+    //d_3 is short in this case
+    if(left.x == right.x)
+    {
+        double d_2 = Calculate_Real_Distance(img, center);
+        double d_3 = Calculate_Real_Distance(img, left);
+
+        double theta_2 = (left.x - center.x)/(Image_Width/2)*fov.x*2;
+
+        double d_6 = cos(cvt2rad(theta_2))*d_2;
+        double d_7 = d_3 - d_6;
+
+        double theta_4 = cvt2degree(acos(d_7/short_side_distance));
+        double theta_5 = 180-(theta_4 + theta_2);
+        theta_3 = 180-theta_5;
+    }
+
+    //d_1 is short side
+    else
+    {
+        double d_2 = Calculate_Real_Distance(img, center);
+        double d_3 = Calculate_Real_Distance(img, right);
+
+        double theta_2 = (left.x - center.x)/(Image_Width/2)*fov.x*2;
+
+        double d_6 = cos(cvt2rad(theta_2))*d_2;
+        double d_7 = d_3 - d_6;
+
+        double theta_4 = cvt2degree(acos(d_7/short_side_distance));
+        double theta_5 = 180-(theta_4 + theta_2);
+        theta_3 = 180-theta_5;
+    }
+
+    return theta_3;
+
+
+}
+
+Point get_min_x(vector<Point> contour)
+{
+    Point min_point = Point(-1,-1);
+    double min = 640;
+    for(unsigned int i = 0; i < contour.size(); i++)
+    {
+        if(contour[i].x < min)
+        {
+            min = contour[i].x;
+            min_point = contour[i];
+        }
+    }
+    return min_point;
+}
+
+Point get_max_x(vector<Point> contour)
+{
+    Point max_point = Point(-1,-1);
+    double max = 0;
+    for(unsigned int i = 0; i < contour.size(); i++)
+    {
+        if(contour[i].x < max)
+        {
+            max = contour[i].x;
+            max_point = contour[i];
+        }
+    }
+    return max_point;
+}
+
+Point get_min_y(vector<Point> contour)
+{
+    Point min_point = Point(-1,-1);
+    double min = 480;
+    for(unsigned int i = 0; i < contour.size(); i++)
+    {
+        if(contour[i].y < min)
+        {
+            min = contour[i].y;
+            min_point = contour[i];
+        }
+    }
+    return min_point;
+}
+
+Point get_max_y(vector<Point> contour)
+{
+    Point max_point = Point(-1,-1);
+    double max = 0;
+    for(unsigned int i = 0; i < contour.size(); i++)
+    {
+        if(contour[i].y > max)
+        {
+            max = contour[i].y;
+            max_point = contour[i];
+        }
+    }
+    return max_point;
+}
+
+Point get_closest_point(Mat img, vector<Point> contour)
+{
+    Point closest_point = Point(-1,-1);
+    Scalar closest = Scalar(255);
+    for(unsigned int i = 0; i < contour.size(); i++)
+    {
+        Scalar intensity = img.at<uchar>(contour[i]);
+        if(intensity[0] < closest[0])
+        {
+            closest[0] = intensity[0];
+            closest_point = contour[i];
+        }
+    }
+    return closest_point;
+}
+
+bool green_bin_top(Mat img, Point2f top)
+{
+    bool green_bin_on_top = false;
+    Vec3b color = img.at<Vec3b>(top);
+    //Check to see if the top pixel is of a green bin
+    if(color[0] <= green_bin[0] + color_tolerance &&
+            color[1] <= green_bin[1] + color_tolerance &&
+            color[2] <= green_bin[2] + color_tolerance &&
+            color[0] >= green_bin[0] - color_tolerance &&
+            color[1] >= green_bin[1] - color_tolerance &&
+            color[2] >= green_bin[2] - color_tolerance)
+    {
+        green_bin_on_top = true;
+    }
+
+    return green_bin_on_top;
+}
+
+bool tote_on_bottom(Mat img, Point2f bottom)
+{
+    {
+        bool tote_on_bottom = false;
+        Vec3b color = img.at<Vec3b>(bottom);
+        //Check to see if the bottom pixel is of a gray tote
+        //Gray Tote
+        if(color[0] <= gray_tote[0] + color_tolerance &&
+                color[1] <= gray_tote[1] + color_tolerance &&
+                color[2] <= gray_tote[2] + color_tolerance &&
+                color[0] >= gray_tote[0] - color_tolerance &&
+                color[1] >= gray_tote[1] - color_tolerance &&
+                color[2] >= gray_tote[2] - color_tolerance)
+        {
+            tote_on_bottom = true;
+
+        }
+
+
+        return tote_on_bottom;
+    }
+}
+
 vector<YellowTote> pairTotes(vector<SingleL> singles)
 {
     std::vector<YellowTote> detected_totes;
@@ -267,6 +489,8 @@ vector<YellowTote> pairTotes(vector<SingleL> singles)
                 singles[j].paired = true;
                 singles[i].paired = true;
                 YellowTote tote(LONG_SIDE);
+                //populate the values we can in our totes based off what we
+                //know from the L's they are constructed from
                 if(singles[i].side == LEFT_SIDE)
                 {
                     tote.set_ratio(singles[i].area/singles[j].area);
@@ -282,80 +506,7 @@ vector<YellowTote> pairTotes(vector<SingleL> singles)
             }
         }
     }
-    return detected_totes;
-}
 
-std::vector<YellowTote> find_yellow_ir(Mat img)
-{
-    std::vector<SingleL> singles;
-    Mat draw;
-    cvtColor(img, draw, CV_GRAY2BGR);
-
-    threshold(img, img, 250, 255, CV_THRESH_BINARY);
-    dilate(img, img, kern, Point(-1,-1), 3);
-    erode(img, img, kern, Point(-1,-1), 1);
-
-    vector<vector<Point> > contours;
-    vector<Vec4i> hierarchy;
-    findContours(img, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
-
-    for (size_t i = 0; i < contours.size(); i++)
-    {
-        vector<Point> contour = contours[i];
-
-        if (contourArea(contour) > max_area || contourArea(contour) < min_area)
-        {
-            continue;
-        }
-
-        Rect bound = boundingRect(contour);
-        rectangle(draw, bound, Scalar(78, 45, 68));
-
-        Point2f massCenter = Calculate_Center(contour);
-        Point2f boxCenter = Point2f(bound.x + (bound.width / 2.0), bound.y + (bound.height / 2.0));
-
-        //line(draw, Point2f(boxCenter, 0), Point2f(boxCenter, 480), Scalar(0, 255, 0));
-        SingleL single_l;
-        single_l.center = massCenter;
-        single_l.bound = bound;
-        single_l.area = contourArea(contours[i]);
-
-        Calculate_side(single_l, boxCenter, draw);
-
-        singles.push_back(single_l);
-    }
-    std::vector<YellowTote> detected_totes = pairTotes(singles);
-
-    //split the detected totes into ones that look stacked and ones that aren't
-    vector<YellowTote> stacked_totes;
-    vector<YellowTote> unstacked_totes;
-
-    //Determine if a tote is stacked or not
-    determine_stacked(detected_totes, stacked_totes, unstacked_totes, draw);
-
-    //Figure out xrot and populate it
-    if(stacked_totes.size() != 0)
-    {
-        for(unsigned int i = 0; i < stacked_totes.size(); i++)
-        {
-            stacked_totes[i].set_xrot(Calculate_Xrot(stacked_totes[i].get_center()));
-        }
-    }
-    for(unsigned int i = 0; i < unstacked_totes.size(); i ++)
-    {
-        unstacked_totes[i].set_xrot(Calculate_Xrot(unstacked_totes[i].get_center()));
-    }
-
-    imshow("Drawing", draw);
-    imwrite("Final.jpeg", draw);
-
-    //send game_pieces that do not have the default values to savannah
 
     return detected_totes;
-    //maybe this function should be a void and do all the udp stuff inside the function.
 }
-
-//vector<YellowTote> find_yellow_color(Mat img)
-//{
-
-//}

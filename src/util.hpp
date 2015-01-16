@@ -5,8 +5,10 @@
 
 #ifdef DEBUG
 #define DEBUG_SHOW imshow
+#define pdebug printf
 #else
-void DEBUG_SHOW(std::string windowName, cv::Mat image){}
+void DEBUG_SHOW(std::string windowName, cv::Mat image) {}
+void pdebug(const char *__format, ...) {}
 #endif
 
 #define COLOR_RED cv::Scalar(0, 0, 255)
