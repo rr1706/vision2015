@@ -79,6 +79,8 @@ int depth() {
         int key = waitKey(1) & 0xFF;
         if (key == 27)
             break;
+        if (key == ' ')
+            waitKey(0);
         vector<Game_Piece> game_pieces = tracker.find_pieces(img, key);
 //        imshow("Image", img);
         //vector<YellowTote> totes = find_yellow_color(img);
@@ -115,6 +117,7 @@ int basictimer()
             pdebug("Current FPS = %.1f\n", 1000/frame_time_ms);
         }
         START_TIMING(Timer);
+        fflush(stdout);
     }
     destroyAllWindows();
     return 0;
