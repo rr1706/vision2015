@@ -78,9 +78,10 @@ bool Game_Piece::get_green_bin()
 
 void Display_Game_Piece(Game_Piece object, Mat img, Point origin)
 {
+    origin = origin - Point(100, 50);
     char str[50];
     sprintf(str, "Ratchet Rockers 1706");
-    putText(img, str,Point(origin.x+15, origin.y), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_BLUE,1,8,false);
+    putText(img, str,Point(20, 20), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_BLUE,1,8,false);
 
     sprintf(str, "XRot  = %.2f", object.get_xrot());
     putText(img, str,Point(origin.x+15, origin.y+20), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_BLUE,1,8,false);

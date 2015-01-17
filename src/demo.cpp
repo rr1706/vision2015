@@ -86,7 +86,7 @@ int depth() {
         STOP_TIMING(Timer);
         frame_time_ms = GET_TIMING(Timer);
         if (frame_time_ms > 0) {
-            //printf("Current FPS = %.1f\n", 1000/frame_time_ms);
+            printf("Current FPS = %.1f\n", 1000/frame_time_ms);
         }
         START_TIMING(Timer);
 
