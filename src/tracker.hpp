@@ -32,6 +32,8 @@ const int height_tolerance = 8;  //cm
 
 const double short_side_distance = 15;
 const double long_side_distance = 30;
+// changes the area around which a edge of a contour is checked for close points containing distance
+const int searchbuffer = 15;
 
 class ColorTracker {
 public:

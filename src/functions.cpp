@@ -16,6 +16,11 @@ double distance(Point2f one, Point2f two)
     return sqrt(pow(one.x - two.x, 2) + pow(one.y - two.y, 2));
 }
 
+double distance1D(double one, double two)
+{
+    return abs(one - two);
+}
+
 double Calculate_Real_Distance(Mat img, Point2f center) {
     Scalar intensity = img.at<uchar>(center);
     return 0.1236 * tan(intensity[0]*4 / 2842.5 + 1.1863)*100;
@@ -61,7 +66,7 @@ void Determine_Game_Piece(Point2f center, Game_Piece& unknown_game_piece, Point 
 
     circle(img, top, 2, COLOR_WHITE, 1, 8, 0);
 
-    Vec3b top_color = img.at<Vec3b>(top);
+    //    Vec3b top_color = img.at<Vec3b>(top);
 
     sprintf(str, "r  = %d", color[0]);
     putText(img, str,Point(15, 35), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_RED,1,8,false);
@@ -314,79 +319,96 @@ void determine_stacked( vector<YellowTote> detected_totes, vector< vector<Yellow
 
 //someone make a document with a step by step process of this math
 //and put it somewhere online so we can link to it in a comment.
-double find_orientation(Mat img, Point2f left, Point2f center, Point2f right)
+double find_orientation(Mat img, Point2f left, Point2f closest, Point2f right)
 {
-    double theta_3 = -99;
-    //is left or right side the long side?
-    //Zac's function will do this for me.
-    //get the distances to the 3 points
-    //d_3 is short in this case
-    if(left.x == right.x)
-    {
-        double d_2 = Calculate_Real_Distance(img, center);
+    double theta_6 = -99;
+
+    double d1 = Calculate_Real_Distance(img, closest);
+    double d2 = Calculate_Real_Distance(img, right);
+    double theta = (right.x - closest.x) *fov.x / (Image_Width);
+    double c = sqrt(pow(d1, 2) + pow(d2, 2) - (2 * d1 * d2 * cos(cvt2rad(theta))));
+    printf("c = %.2f\n", c);
+
+    if (c < 10) {
+        theta_6 = 0;
+    } else if (c > 100) {
+        theta_6 = 90;
+    } else if (c > 40) {
+        double d_2 = Calculate_Real_Distance(img, closest);
         double d_3 = Calculate_Real_Distance(img, left);
 
-        double theta_2 = (left.x - center.x)/(Image_Width/2)*fov.x*2;
+        printf("d2 = %.2f\n", d_2);
+        printf("d3 = %.2f\n", d_3);
+
+        double theta_2 = ((left.x - closest.x) * fov.x / (Image_Width));
+        printf("theta2 = %.2f\n", theta_2);
 
         double d_6 = cos(cvt2rad(theta_2))*d_2;
-        double d_7 = d_3 - d_6;
+        printf("d6 = %.2f\n", d_6);
 
-        double theta_4 = cvt2degree(acos(d_7/short_side_distance));
-        double theta_5 = 180-(theta_4 + theta_2);
-        theta_3 = 180-theta_5;
-    }
+        double d_7 = tan(cvt2rad(theta_2))*d_2;
+        printf("d7 = %.2f\n", d_7);
 
-    //d_1 is short side
-    else
-    {
-        double d_2 = Calculate_Real_Distance(img, center);
+        double d_8 = d_3 - d_6;
+        printf("d8 = %.2f\n", d_8);
+
+        theta_6 = cvt2degree(atan(d_8/d_7));
+    } else {
+        double d_2 = Calculate_Real_Distance(img, closest);
         double d_3 = Calculate_Real_Distance(img, right);
 
-        double theta_2 = (left.x - center.x)/(Image_Width/2)*fov.x*2;
+        printf("d2 = %.2f\n", d_2);
+        printf("d3 = %.2f\n", d_3);
+
+        double theta_2 = ((right.x - closest.x) * fov.x / (Image_Width));
+        printf("theta2 = %.2f\n", theta_2);
 
         double d_6 = cos(cvt2rad(theta_2))*d_2;
-        double d_7 = d_3 - d_6;
+        printf("d6 = %.2f\n", d_6);
 
-        double theta_4 = cvt2degree(acos(d_7/short_side_distance));
-        double theta_5 = 180-(theta_4 + theta_2);
-        theta_3 = 180-theta_5;
-        printf("%f %f", d_2, d_3);
+        double d_7 = tan(cvt2rad(theta_2))*d_2;
+        printf("d7 = %.2f\n", d_7);
+
+        double d_8 = d_3 - d_6;
+        printf("d8 = %.2f\n", d_8);
+
+        theta_6 = cvt2degree(atan(d_8/d_7));
     }
 
-    return theta_3;
+    return theta_6;
 
 }
 
-Point get_min_x(Contour contour, Point closest)
+Point get_min_x(Mat img, Rect boundrect)
 {
-    Point min_point = Point(-1,-1);
-    double min = 640;
-    for(unsigned int i = 0; i < contour.size(); i++)
-    {
-        if(contour[i].x < min && abs(contour[i].y - closest.y) < 15)
-        {
-            min = contour[i].x;
-            min_point = contour[i];
+    int x;
+    int y = boundrect.y + boundrect.height / 2;
+    Scalar sclr;
+    for (x = boundrect.x; x < boundrect.x + 40; x++) {
+        if (x > 640)
+            continue;
+        sclr = img.at<uchar>(Point(x, y));
+        if (sclr[0] < 255) {
+            break;
         }
     }
-    return min_point;
-//    return Point(boundrect.x + 15, boundrect.y + boundrect.height/2);
+    return Point(x, y);
 }
 
-Point get_max_x(Contour contour, Point closest)
+Point get_max_x(Mat img, Rect boundrect)
 {
-    Point max_point = Point(-1,-1);
-    double max = 0;
-    for(unsigned int i = 0; i < contour.size(); i++)
-    {
-
-        if(contour[i].x > max && abs(contour[i].y - closest.y) < 15)
-        {
-            max = contour[i].x;
-            max_point = contour[i];
+    int x;
+    int y = boundrect.y + boundrect.height / 2;
+    Scalar sclr;
+    for (x = boundrect.x + boundrect.width; x > boundrect.x + boundrect.width - 40; x--) {
+        if (x < 0)
+            continue;
+        sclr = img.at<uchar>(Point(x, y));
+        if (sclr[0] < 255) {
+            break;
         }
     }
-    return max_point;
+    return Point(x, y);
 }
 
 Point get_min_y(Rect boundrect)
@@ -407,23 +429,21 @@ Point get_closest_point(Mat img, vector<Point> contour)
     {
 
         double intensity = 255;
-        const int searchbuffer = 15;
-        for (int x = -searchbuffer; x < searchbuffer; x++) {
-            for (int y = -searchbuffer; y < searchbuffer; y++) {
-                if (x < 0 || y < 0 || x > 640 || y > 480)
-                    continue;
-                Scalar sclr = img.at<uchar>(Point(x, y));
-                if (sclr[0] < 255) {
-                    intensity = sclr[0];
-                    goto done;
-                }
+        int x = contour[i].x;
+        int y;
+        for (y = contour[i].y; y < contour[i].y + searchbuffer; y++) {
+            if (x < 0 || y < 0 || x > 640 || y > 480)
+                continue;
+            Scalar sclr = img.at<uchar>(Point(x, y));
+            if (sclr[0] < 255) {
+                intensity = sclr[0];
+                break;
             }
         }
-        done:
         if(intensity < closest)
         {
             closest = intensity;
-            closest_point = contour[i];
+            closest_point = Point(x, y);
         }
     }
     return closest_point;

@@ -84,8 +84,8 @@ std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, int key)
             Rect boundrect = boundingRect(contours[i]);
 
             Point closest = get_closest_point(img, contours[i]);
-            Point left = get_min_x(contours[i], closest);
-            Point right = get_max_x(contours[i], closest);
+            Point left = get_min_x(img, boundrect);
+            Point right = get_max_x(img, boundrect);
             Point bottom = get_max_y(boundrect);
             Point top = get_min_y(boundrect);
 
@@ -98,7 +98,7 @@ std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, int key)
 
 
             //Find distance based off pixel intensity
-            double distance = Calculate_Real_Distance(img, center);
+            double distance = Calculate_Real_Distance(img, closest);
 
             //Check color to tell what game piece, if any, we are looking at.
             Determine_Game_Piece(center, unknown_game_piece, top, bottom);
