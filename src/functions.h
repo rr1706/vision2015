@@ -4,6 +4,9 @@
 #include <opencv2/core/core.hpp>
 #include "yellow.hpp"
 
+
+typedef std::vector<cv::Point> Contour;
+
 //Returns the distance between two floating points.
 double distance(cv::Point2f one, cv::Point2f two);
 
@@ -47,10 +50,10 @@ void Calculate_side(SingleL L, cv::Point2f center, cv::Mat img);
 double find_orientation(cv::Mat img, cv::Point2f left, cv::Point2f center, cv::Point2f right);
 
 //Returns the furthest left point in a contour
-cv::Point get_min_x(cv::Rect boundrect);
+cv::Point get_min_x(Contour contour, cv::Point closest);
 
 //Returns the furthest right point in a contour
-cv::Point get_max_x(cv::Rect boundrect);
+cv::Point get_max_x(Contour contour, cv::Point closest);
 
 //Returns the highest pixel in a contour
 cv::Point get_min_y(cv::Rect boundrect);

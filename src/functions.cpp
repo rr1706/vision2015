@@ -1,6 +1,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <stdint.h>
 #include "util.hpp"
 #include <free.hpp>
 #include "yellow.hpp"
@@ -349,21 +350,43 @@ double find_orientation(Mat img, Point2f left, Point2f center, Point2f right)
         double theta_4 = cvt2degree(acos(d_7/short_side_distance));
         double theta_5 = 180-(theta_4 + theta_2);
         theta_3 = 180-theta_5;
+        printf("%f %f", d_2, d_3);
     }
 
     return theta_3;
 
-
 }
 
-Point get_min_x(Rect boundrect)
+Point get_min_x(Contour contour, Point closest)
 {
-    return Point(boundrect.x, boundrect.y + boundrect.height/2);
+    Point min_point = Point(-1,-1);
+    double min = 640;
+    for(unsigned int i = 0; i < contour.size(); i++)
+    {
+        if(contour[i].x < min && abs(contour[i].y - closest.y) < 15)
+        {
+            min = contour[i].x;
+            min_point = contour[i];
+        }
+    }
+    return min_point;
+//    return Point(boundrect.x + 15, boundrect.y + boundrect.height/2);
 }
 
-Point get_max_x(Rect boundrect)
+Point get_max_x(Contour contour, Point closest)
 {
-    return Point(boundrect.x + boundrect.width, boundrect.y + boundrect.height/2);
+    Point max_point = Point(-1,-1);
+    double max = 0;
+    for(unsigned int i = 0; i < contour.size(); i++)
+    {
+
+        if(contour[i].x > max && abs(contour[i].y - closest.y) < 15)
+        {
+            max = contour[i].x;
+            max_point = contour[i];
+        }
+    }
+    return max_point;
 }
 
 Point get_min_y(Rect boundrect)
@@ -379,13 +402,27 @@ Point get_max_y(Rect boundrect)
 Point get_closest_point(Mat img, vector<Point> contour)
 {
     Point closest_point = Point(-1,-1);
-    Scalar closest = Scalar(255);
+    double closest = 255;
     for(unsigned int i = 0; i < contour.size(); i++)
     {
-        Scalar intensity = img.at<uchar>(contour[i]);
-        if(intensity[0] < closest[0])
+
+        double intensity = 255;
+        const int searchbuffer = 15;
+        for (int x = -searchbuffer; x < searchbuffer; x++) {
+            for (int y = -searchbuffer; y < searchbuffer; y++) {
+                if (x < 0 || y < 0 || x > 640 || y > 480)
+                    continue;
+                Scalar sclr = img.at<uchar>(Point(x, y));
+                if (sclr[0] < 255) {
+                    intensity = sclr[0];
+                    goto done;
+                }
+            }
+        }
+        done:
+        if(intensity < closest)
         {
-            closest[0] = intensity[0];
+            closest = intensity;
             closest_point = contour[i];
         }
     }

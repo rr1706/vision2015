@@ -15,6 +15,7 @@ std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, int key)
     calibrate = imread("./Calibrate.png", CV_LOAD_IMAGE_GRAYSCALE);
 
     convertScaleAbs(img, img, 0.25, 0);
+//    img.convertTo(img, CV_8UC1, 255.0/2048.0);
 
     //img = imread("raw.jpeg", CV_LOAD_IMAGE_GRAYSCALE);
 
@@ -73,9 +74,6 @@ std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, int key)
         if(contourArea(contours[i])>2500 && contourArea(contours[i]) < 500000)
         {
 
-            for (size_t j = 0; j < contours[i].size(); j++) {
-                circle(img, contours[i][j], 3, COLOR_RED, 2);
-            }
             //todo: differentiate between two objects that are overlapping
             //Calculate average distance to a contour (by averaging the distance to every pixel in the contour
             //vector<float> ave_distance = Average_Distance(depth, contours, boundRect);
@@ -85,14 +83,19 @@ std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, int key)
 
             Rect boundrect = boundingRect(contours[i]);
 
-            Point left = get_min_x(boundrect);
-            Point right = get_max_x(boundrect);
             Point closest = get_closest_point(img, contours[i]);
+            Point left = get_min_x(contours[i], closest);
+            Point right = get_max_x(contours[i], closest);
             Point bottom = get_max_y(boundrect);
             Point top = get_min_y(boundrect);
 
+            circle(drawing, closest, 2, COLOR_BLUE, 1, 8, 0);
             circle(drawing, top, 2, COLOR_RED, 1, 8, 0);
             circle(drawing, bottom, 2, COLOR_RED, 1, 8, 0);
+            circle(drawing, right, 2, COLOR_RED, 1, 8, 0);
+            circle(drawing, left, 2, COLOR_RED, 1, 8, 0);
+
+
 
             //Find distance based off pixel intensity
             double distance = Calculate_Real_Distance(img, center);
@@ -101,7 +104,7 @@ std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, int key)
             Determine_Game_Piece(center, unknown_game_piece, top, bottom);
 
             //draw what we know
-            drawContours(img, contours,i, COLOR_RED, 3, 8, hierarchy, 0, Point() );
+            drawContours(drawing, contours,i, COLOR_RED, 1, 8, hierarchy, 0, Point() );
             rectangle(drawing, boundRect.tl(), boundRect.br(), COLOR_RED, 2, 8, 0 );
             circle(drawing, center, 2, COLOR_RED, 1, 8, 0);
 
@@ -114,7 +117,7 @@ std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, int key)
                 unknown_game_piece.set_totes_high(totes);
 
                 //Determine offset
-                //                unknown_game_piece.set_rotation(find_orientation(img, left, closest, right));
+                unknown_game_piece.set_rotation(find_orientation(img, left, closest, right));
             }
 
             //Populate our class with values that we calculated
