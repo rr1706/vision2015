@@ -5,6 +5,7 @@
 #include "functions.h"
 #include "tracker.hpp"
 #include "util.hpp"
+#include <signal.h>
 
 using namespace cv;
 using namespace std;
@@ -79,6 +80,7 @@ int depth() {
         if (key == 27)
             break;
         vector<Game_Piece> game_pieces = tracker.find_pieces(img, key);
+//        imshow("Image", img);
         //vector<YellowTote> totes = find_yellow_color(img);
         //vector<YellowTote> totes_= tracker.find_totes(img);
         STOP_TIMING(Timer);
@@ -118,6 +120,14 @@ int basictimer()
     return 0;
 }
 
+void handle_signal(int signum)
+{
+    if (signum == SIGINT || signum == SIGTERM)
+        exit(5);
+}
+
 int main() {
+    signal(SIGINT, handle_signal);
+    signal(SIGTERM, handle_signal);
     return depth();
 }
