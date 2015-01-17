@@ -25,7 +25,7 @@ double cvt2rad(double degree);
 double cvt2degree(double radian);
 
 //Determines if the object is a yellow tote, gray tote, or green bin
-void Determine_Game_Piece(cv::Point2f center, Game_Piece& unknown_game_piece, std::vector<cv::Point> contour);
+void Determine_Game_Piece(cv::Point2f center, Game_Piece& unknown_game_piece, cv::Point top, cv::Point bottom);
 
 //Captures current frame for the new calibration image
 void Get_Calibration_Image(cv::Mat img, int key);
@@ -35,7 +35,7 @@ void Get_Calibration_Image(cv::Mat img, int key);
 double Calculate_Xrot(cv::Point2f center);
 
 //Determines amount of totes stacked
-void find_number_of_totes(cv::Mat img, Game_Piece& tote, cv::Point2f center, cv::Point2f height);
+int find_number_of_totes(cv::Mat img, Game_Piece& tote, cv::Point2f center, cv::Point2f height);
 
 //Matches SingleLs, returns vector of YellowTotes
 std::vector<YellowTote> pairTotes(std::vector<SingleL> singles);
@@ -47,16 +47,16 @@ void Calculate_side(SingleL L, cv::Point2f center, cv::Mat img);
 double find_orientation(cv::Mat img, cv::Point2f left, cv::Point2f center, cv::Point2f right);
 
 //Returns the furthest left point in a contour
-cv::Point get_min_x(std::vector<cv::Point> contour);
+cv::Point get_min_x(cv::Rect boundrect);
 
 //Returns the furthest right point in a contour
-cv::Point get_max_x(std::vector<cv::Point> contour);
+cv::Point get_max_x(cv::Rect boundrect);
 
 //Returns the highest pixel in a contour
-cv::Point get_min_y(std::vector<cv::Point> contour);
+cv::Point get_min_y(cv::Rect boundrect);
 
 //Returns the lowest pixel in a contour
-cv::Point get_max_y(std::vector<cv::Point> contour);
+cv::Point get_max_y(cv::Rect boundrect);
 
 //Returns the closest point in a contour
 cv::Point get_closest_point(cv::Mat img, std::vector<cv::Point> contour);

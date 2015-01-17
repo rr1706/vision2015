@@ -31,7 +31,7 @@ public:
     float get_xrot();
     float get_distance();
     float get_rotation();
-    bool get_totes_high();
+    int get_totes_high();
     int get_piece_type();
     bool get_green_bin();
 

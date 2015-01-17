@@ -72,6 +72,10 @@ std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, int key)
     {
         if(contourArea(contours[i])>2500 && contourArea(contours[i]) < 500000)
         {
+
+            for (size_t j = 0; j < contours[i].size(); j++) {
+                circle(img, contours[i][j], 3, COLOR_RED, 2);
+            }
             //todo: differentiate between two objects that are overlapping
             //Calculate average distance to a contour (by averaging the distance to every pixel in the contour
             //vector<float> ave_distance = Average_Distance(depth, contours, boundRect);
@@ -79,11 +83,13 @@ std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, int key)
             //calculate the center of the contour using nth order (1st order) moments
             Point2f center = Calculate_Center(contours[i]);
 
-            Point left = get_min_x(contours[i]);
-            Point right = get_max_x(contours[i]);
+            Rect boundrect = boundingRect(contours[i]);
+
+            Point left = get_min_x(boundrect);
+            Point right = get_max_x(boundrect);
             Point closest = get_closest_point(img, contours[i]);
-            Point bottom = get_max_y(contours[i]);
-            Point top = get_min_y(contours[i]);
+            Point bottom = get_max_y(boundrect);
+            Point top = get_min_y(boundrect);
 
             circle(drawing, top, 2, COLOR_RED, 1, 8, 0);
             circle(drawing, bottom, 2, COLOR_RED, 1, 8, 0);
@@ -92,7 +98,7 @@ std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, int key)
             double distance = Calculate_Real_Distance(img, center);
 
             //Check color to tell what game piece, if any, we are looking at.
-            Determine_Game_Piece(center, unknown_game_piece, contours[i]);
+            Determine_Game_Piece(center, unknown_game_piece, top, bottom);
 
             //draw what we know
             drawContours(img, contours,i, COLOR_RED, 3, 8, hierarchy, 0, Point() );
@@ -103,10 +109,12 @@ std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, int key)
             if(unknown_game_piece.get_piece_type() == 1 || unknown_game_piece.get_piece_type() == 2)
             {
                 //Determine stack height
-                find_number_of_totes(img, unknown_game_piece, center, top);
+                int totes = find_number_of_totes(img, unknown_game_piece, center, top);
+
+                unknown_game_piece.set_totes_high(totes);
 
                 //Determine offset
-                unknown_game_piece.set_rotation(find_orientation(img, left, closest, right));
+                //                unknown_game_piece.set_rotation(find_orientation(img, left, closest, right));
             }
 
             //Populate our class with values that we calculated

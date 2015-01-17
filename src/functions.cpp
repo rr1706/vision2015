@@ -50,22 +50,24 @@ double cvt2degree(double radian)
     return radian*180/CV_PI;
 }
 
-void Determine_Game_Piece(Point2f center, Game_Piece& unknown_game_piece, vector<Point> contour)
+void Determine_Game_Piece(Point2f center, Game_Piece& unknown_game_piece, Point top, Point bottom)
 {
     char str[50];
     Mat img = kinectRGB(0);
     cvtColor(img, img, CV_BGR2RGB);
     Vec3b color = img.at<Vec3b>(center);
+    circle(img, center, 2, COLOR_RED, 1, 8, 0);
 
-    Point bottom = get_max_y(contours[i]);
-    Point top = get_min_y(contours[i]);
+    circle(img, top, 2, COLOR_WHITE, 1, 8, 0);
+
+    Vec3b top_color = img.at<Vec3b>(top);
 
     sprintf(str, "r  = %d", color[0]);
-    putText(img, str,Point(15, 35), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_WHITE,1,8,false);
+    putText(img, str,Point(15, 35), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_RED,1,8,false);
     sprintf(str, "g  = %d", color[1]);
-    putText(img, str,Point(15, 55), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_WHITE,1,8,false);
+    putText(img, str,Point(15, 55), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_RED,1,8,false);
     sprintf(str, "b  = %d", color[2]);
-    putText(img, str,Point(15, 75), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_WHITE,1,8,false);
+    putText(img, str,Point(15, 75), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_RED,1,8,false);
 
     //Yellow Tote
     if(color[0] <= yellow_tote[0] + color_tolerance &&
@@ -100,11 +102,11 @@ void Determine_Game_Piece(Point2f center, Game_Piece& unknown_game_piece, vector
         unknown_game_piece.set_piece_type(3);
     }
 
-    if(unknown_game_piece.get_piece_type() ==1 && green_bin_top(img, top))
+    if(unknown_game_piece.get_piece_type() == 1 && green_bin_top(img, top + Point(0, 40)))
     {
         unknown_game_piece.set_green_bin(true);
     }
-    if(unknown_game_piece.get_piece_type(3) && tote_on_bottom(img, bottom))
+    if(unknown_game_piece.get_piece_type() == 3 && tote_on_bottom(img, bottom - Point(0, 40)))
     {
         unknown_game_piece.set_piece_type(1);
     }
@@ -113,7 +115,7 @@ void Determine_Game_Piece(Point2f center, Game_Piece& unknown_game_piece, vector
     return;
 }
 
-void find_number_of_totes(Mat img, Game_Piece& tote, Point2f center, Point2f height)
+int find_number_of_totes(Mat img, Game_Piece& tote, Point2f center, Point2f height)
 {
     double diff = abs(center.y - height.y);
     double yrot = diff*fov.y/(Image_Height);
@@ -121,33 +123,33 @@ void find_number_of_totes(Mat img, Game_Piece& tote, Point2f center, Point2f hei
     Scalar intensity = img.at<uchar>(height);
     float distance_to_top = 0.1236 * tan(intensity[0]*4 / 2842.5 + 1.1863)*100;
     float real_height =  2*sin(yrot)*distance_to_top;
-    printf("real height = %.2f\n", real_height);
+    printf("real height = %.2fcm\n", real_height);
     //Check heights
     if(tote.get_green_bin() == false) //no green bin on top
     {
         if(real_height <= single_stack_height + height_tolerance && real_height >= single_stack_height - height_tolerance)
         {
-            tote.set_totes_high(1);
+            return 1;
         }
         else if(real_height <= double_stack_height + height_tolerance && real_height >= double_stack_height - height_tolerance)
         {
-            tote.set_totes_high(2);
+            return 2;
         }
         else if(real_height <= triple_stack_height + height_tolerance && real_height >= triple_stack_height - height_tolerance)
         {
-            tote.set_totes_high(3);
+            return 3;
         }
         else if(real_height <= quad_stack_height + height_tolerance && real_height >= quad_stack_height - height_tolerance)
         {
-            tote.set_totes_high(4);
+            return 4;
         }
         else if(real_height <= penta_stack_height + height_tolerance && real_height >= penta_stack_height - height_tolerance)
         {
-            tote.set_totes_high(5);
+            return 5;
         }
         else if(real_height <= hexa_stack_height + height_tolerance && real_height >= hexa_stack_height - height_tolerance)
         {
-            tote.set_totes_high(6);
+            return 6;
         }
     }
     else //green bin on top
@@ -155,35 +157,35 @@ void find_number_of_totes(Mat img, Game_Piece& tote, Point2f center, Point2f hei
         if(real_height <= single_stack_height + bin_height +height_tolerance &&
                 real_height >= single_stack_height + bin_height - height_tolerance)
         {
-            tote.set_totes_high(1);
+            return 1;
         }
         else if(real_height <= double_stack_height + bin_height + height_tolerance &&
                 real_height >= double_stack_height + bin_height - height_tolerance)
         {
-            tote.set_totes_high(2);
+            return 2;
         }
         else if(real_height <= triple_stack_height + bin_height + height_tolerance &&
                 real_height >= triple_stack_height + bin_height - height_tolerance)
         {
-            tote.set_totes_high(3);
+            return 3;
         }
         else if(real_height <= quad_stack_height + bin_height + height_tolerance &&
                 real_height >= quad_stack_height + bin_height - height_tolerance)
         {
-            tote.set_totes_high(4);
+            return 4;
         }
         else if(real_height <= penta_stack_height + bin_height + height_tolerance &&
                 real_height >= penta_stack_height + bin_height - height_tolerance)
         {
-            tote.set_totes_high(5);
+            return 5;
         }
         else if(real_height <= hexa_stack_height + bin_height + height_tolerance &&
                 real_height >= hexa_stack_height + bin_height - height_tolerance)
         {
-            tote.set_totes_high(6);
+            return 6;
         }
     }
-    return;
+    return -1;
 }
 
 void Get_Calibration_Image(Mat img, int key)
@@ -354,64 +356,24 @@ double find_orientation(Mat img, Point2f left, Point2f center, Point2f right)
 
 }
 
-Point get_min_x(vector<Point> contour)
+Point get_min_x(Rect boundrect)
 {
-    Point min_point = Point(-1,-1);
-    double min = 640;
-    for(unsigned int i = 0; i < contour.size(); i++)
-    {
-        if(contour[i].x < min)
-        {
-            min = contour[i].x;
-            min_point = contour[i];
-        }
-    }
-    return min_point;
+    return Point(boundrect.x, boundrect.y + boundrect.height/2);
 }
 
-Point get_max_x(vector<Point> contour)
+Point get_max_x(Rect boundrect)
 {
-    Point max_point = Point(-1,-1);
-    double max = 0;
-    for(unsigned int i = 0; i < contour.size(); i++)
-    {
-        if(contour[i].x < max)
-        {
-            max = contour[i].x;
-            max_point = contour[i];
-        }
-    }
-    return max_point;
+    return Point(boundrect.x + boundrect.width, boundrect.y + boundrect.height/2);
 }
 
-Point get_min_y(vector<Point> contour)
+Point get_min_y(Rect boundrect)
 {
-    Point min_point = Point(-1,-1);
-    double min = 480;
-    for(unsigned int i = 0; i < contour.size(); i++)
-    {
-        if(contour[i].y < min)
-        {
-            min = contour[i].y;
-            min_point = contour[i];
-        }
-    }
-    return min_point;
+    return Point(boundrect.x + (boundrect.width / 2.0), boundrect.y + 15);
 }
 
-Point get_max_y(vector<Point> contour)
+Point get_max_y(Rect boundrect)
 {
-    Point max_point = Point(-1,-1);
-    double max = 0;
-    for(unsigned int i = 0; i < contour.size(); i++)
-    {
-        if(contour[i].y > max)
-        {
-            max = contour[i].y;
-            max_point = contour[i];
-        }
-    }
-    return max_point;
+    return Point(boundrect.x + (boundrect.width / 2.0), boundrect.y + boundrect.height - 15);
 }
 
 Point get_closest_point(Mat img, vector<Point> contour)
@@ -453,6 +415,7 @@ bool tote_on_bottom(Mat img, Point2f bottom)
     {
         bool tote_on_bottom = false;
         Vec3b color = img.at<Vec3b>(bottom);
+        printf("r%d g%d b%d\r\n", color[0], color[1], color[2]);
         //Check to see if the bottom pixel is of a gray tote
         //Gray Tote
         if(color[0] <= gray_tote[0] + color_tolerance &&

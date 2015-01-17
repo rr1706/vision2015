@@ -61,7 +61,7 @@ float Game_Piece::get_rotation()
     return rotation;
 }
 
-bool Game_Piece::get_totes_high()
+int Game_Piece::get_totes_high()
 {
     return totes_high;
 }
