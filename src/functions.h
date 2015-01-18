@@ -27,6 +27,12 @@ double cvt2rad(double degree);
 //Converts radians to degrees
 double cvt2degree(double radian);
 
+// Convert a OpenCV 3-byte vector to a scalar (for drawing functions)
+cv::Scalar vec2scalar(cv::Vec3b input);
+
+// Convert a Scalar to a 3-byte vector that can be accessed as integers instead of doubles
+cv::Vec3b scalar2vec(cv::Scalar input);
+
 //Determines if the object is a yellow tote, gray tote, or green bin
 void Determine_Game_Piece(cv::Mat rgb, cv::Point2f center, Game_Piece& unknown_game_piece, cv::Point top, cv::Point bottom);
 
@@ -56,10 +62,10 @@ cv::Point get_min_x(cv::Mat img, cv::Rect boundrect);
 cv::Point get_max_x(cv::Mat img, cv::Rect boundrect);
 
 //Returns the highest pixel in a contour
-cv::Point get_min_y(cv::Rect boundrect);
+cv::Point get_min_y(cv::Mat img, cv::Rect boundrect);
 
 //Returns the lowest pixel in a contour
-cv::Point get_max_y(cv::Rect boundrect);
+cv::Point get_max_y(cv::Mat img, cv::Rect boundrect);
 
 //Returns the closest point in a contour
 cv::Point get_closest_point(cv::Mat img, std::vector<cv::Point> contour);
@@ -72,6 +78,8 @@ bool tote_on_bottom(cv::Mat img, cv::Point2f bottom);
 
 //Populates stacked_totes and unstacked_totes with the approapriate detected_totes
 void determine_stacked(std::vector<YellowTote> detected_totes, std::vector<std::vector<YellowTote> >& stacked_totes, std::vector<YellowTote>& unstacked_totes, cv::Mat img);
+
+void print_color(cv::Mat &img, cv::Scalar color, cv::Point2i location);
 
 #endif // FUNCTIONS_H
 

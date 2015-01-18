@@ -56,22 +56,32 @@ double cvt2degree(double radian)
     return radian*180/CV_PI;
 }
 
-void Determine_Game_Piece(Mat img, Point2f center, Game_Piece& unknown_game_piece, Point top, Point bottom)
+Scalar vec2scalar(Vec3b input)
 {
-    char str[50];
-    Vec3b color = img.at<Vec3b>(center);
-    circle(img, center, 2, COLOR_RED, 1, 8, 0);
+    uint8_t r = input[0];
+    uint8_t g = input[1];
+    uint8_t b = input[2];
+    return Scalar(r, g, b);
+}
 
-    circle(img, top, 2, COLOR_WHITE, 1, 8, 0);
+Vec3b scalar2vec(Scalar input)
+{
+    uint8_t r = input[0];
+    uint8_t g = input[1];
+    uint8_t b = input[2];
+    return Vec3b(r, g, b);
+}
 
-    //    Vec3b top_color = img.at<Vec3b>(top);
+void Determine_Game_Piece(Mat img, Point2f, Game_Piece& unknown_game_piece, Point top, Point bottom)
+{
+    cvtColor(img, img, CV_BGR2RGB);
+    Point toteCheckpoint = bottom - Point(0, 40);
+    Point binCheckpoint = top + Point(0, 80);
+    Vec3b color = img.at<Vec3b>(toteCheckpoint);
+    Vec3b top_color = img.at<Vec3b>(binCheckpoint);
 
-    sprintf(str, "r  = %d", color[0]);
-    putText(img, str,Point(15, 35), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_RED,1,8,false);
-    sprintf(str, "g  = %d", color[1]);
-    putText(img, str,Point(15, 55), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_RED,1,8,false);
-    sprintf(str, "b  = %d", color[2]);
-    putText(img, str,Point(15, 75), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_RED,1,8,false);
+    print_color(img, vec2scalar(color), toteCheckpoint);
+    print_color(img, vec2scalar(top_color), binCheckpoint);
 
     //Yellow Tote
     if(color[0] <= yellow_tote[0] + color_tolerance &&
@@ -106,15 +116,15 @@ void Determine_Game_Piece(Mat img, Point2f center, Game_Piece& unknown_game_piec
         unknown_game_piece.set_piece_type(3);
     }
 
-    if(unknown_game_piece.get_piece_type() == 1 && green_bin_top(img, top + Point(0, 40)))
+    if(unknown_game_piece.get_piece_type() == 1 && green_bin_top(img, binCheckpoint))
     {
         unknown_game_piece.set_green_bin(true);
     }
-    if(unknown_game_piece.get_piece_type() == 3 && tote_on_bottom(img, bottom - Point(0, 40)))
+    if(unknown_game_piece.get_piece_type() == 3 && tote_on_bottom(img, toteCheckpoint))
     {
         unknown_game_piece.set_piece_type(1);
     }
-
+    cvtColor(img, img, CV_RGB2BGR);
     imshow("RGB", img);
     return;
 }
@@ -409,14 +419,36 @@ Point get_max_x(Mat img, Rect boundrect)
     return Point(x, y);
 }
 
-Point get_min_y(Rect boundrect)
+Point get_min_y(Mat img, Rect boundrect)
 {
-    return Point(boundrect.x + (boundrect.width / 2.0), boundrect.y + 15);
+    int x = boundrect.x + (boundrect.width / 2);
+    int y;
+    Scalar sclr;
+    for (y = boundrect.y; y < boundrect.y + 40; y++) {
+        if (y > 480)
+            continue;
+        sclr = img.at<uchar>(Point(x, y));
+        if (sclr[0] < 255) {
+            break;
+        }
+    }
+    return Point(x, y);
 }
 
-Point get_max_y(Rect boundrect)
+Point get_max_y(Mat img, Rect boundrect)
 {
-    return Point(boundrect.x + (boundrect.width / 2.0), boundrect.y + boundrect.height - 15);
+    int x = boundrect.x + (boundrect.width / 2);
+    int y;
+    Scalar sclr;
+    for (y = boundrect.y + boundrect.height; y > boundrect.y + boundrect.height - 40; y--) {
+        if (y < 0)
+            continue;
+        sclr = img.at<uchar>(Point(x, y));
+        if (sclr[0] < 255) {
+            break;
+        }
+    }
+    return Point(x, y);
 }
 
 Point get_closest_point(Mat img, vector<Point> contour)
@@ -527,4 +559,17 @@ vector<YellowTote> pairTotes(vector<SingleL> singles)
 
 
     return detected_totes;
+}
+
+void print_color(Mat &img, Scalar color, Point2i location)
+{
+    char colorStr[255];
+    Rect rekt(location.x - 5, location.y - 20, 120, 30);
+    Vec3b saneColor = scalar2vec(color);
+    // warn: if color is RGB then it is going to draw an inverted color rectangle :)
+    rectangle(img, rekt, color, CV_FILLED);
+    rectangle(img, rekt, COLOR_WHITE, 1);
+    sprintf(colorStr, "(%03d,%03d,%03d)", saneColor[0], saneColor[1], saneColor[2]);
+    putText(img, colorStr, location, CV_FONT_HERSHEY_PLAIN, 1, COLOR_WHITE);
+    circle(img, location, 2, COLOR_BLACK, 1);
 }
