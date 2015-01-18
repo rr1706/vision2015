@@ -104,16 +104,22 @@ int depth() {
 
 int depthimdir() {
     int i = 0;
+    int key = 0;
+    namedWindow("Calibrated");
+    namedWindow("Drawing");
+    namedWindow("RGB");
+    moveWindow("RGB", 0, 20);
+    moveWindow("Drawing", 640, 20);
     DepthTracker tracker;
     while (true) {
-        printf("%d\n", i);
+        printf("<< ../images/green bin/*/img_%d.jpg\n", i);
         Mat depth = imread("../images/green bin/depth/img_" + std::to_string(i) + ".jpg", CV_LOAD_IMAGE_GRAYSCALE);
         Mat rgb = imread("../images/green bin/rgb/img_" + std::to_string(i) + ".jpg");
 //        Mat ir = imread("../images/green bin/ir/img_" + std::to_string(i) + ".jpg");
 
-        printf("%d %d\n", depth.rows, rgb.rows);
+        vector<Game_Piece> game_pieces = tracker.find_pieces(depth, rgb, key);
         int raw = cv::waitKey(0) & 0xFFFF;
-        int key = raw & 0xFF;
+        key = raw & 0xFF;
         if ((raw & 0xFF00) == 0xFF00) {
             if (key == 0x51) {
                 i--;
@@ -123,7 +129,6 @@ int depthimdir() {
         } else if (key == 27) {
             break;
         }
-        vector<Game_Piece> game_pieces = tracker.find_pieces(depth, rgb, key);
     }
     cv::destroyAllWindows();
     return 0;

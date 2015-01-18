@@ -16,9 +16,9 @@ static cv::Mat kern = cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3),
 const int max_area = 1000000;
 const int min_area = 100;
 const cv::Scalar yellow_tote(10,5,80);
-const cv::Scalar gray_tote(30,30,30);
-const cv::Scalar green_bin(50,50,50);
-const int color_tolerance = 80;
+const cv::Scalar gray_tote(80,10,10);
+const cv::Scalar green_bin(40,40,40);
+const int color_tolerance = 30;
 
 const int single_stack_height = 28;  //cm
 const int double_stack_height = 58;  //cm
