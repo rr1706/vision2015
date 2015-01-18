@@ -8,18 +8,12 @@
 using namespace cv;
 using namespace std;
 
-std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, int key)
+std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, Mat rgb, int key)
 {
     Mat calibrate, calibrated, thresholded, thresholded2, dst, detected_edges, drawing;
 
-    calibrate = imread("./Calibrate.png", CV_LOAD_IMAGE_GRAYSCALE);
-
-    convertScaleAbs(img, img, 0.25, 0);
-//    img.convertTo(img, CV_8UC1, 255.0/2048.0);
-
-    //img = imread("raw.jpeg", CV_LOAD_IMAGE_GRAYSCALE);
-
-    //imwrite("raw.jpeg", img);
+    puts("WARN change calibrate image at depth.cpp:16 to something else");
+    calibrate = imread("../images/green bin/depth/img_0.jpg", CV_LOAD_IMAGE_GRAYSCALE);
 
     Get_Calibration_Image(img, key);
 
@@ -101,7 +95,7 @@ std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, int key)
             double distance = Calculate_Real_Distance(img, closest);
 
             //Check color to tell what game piece, if any, we are looking at.
-            Determine_Game_Piece(center, unknown_game_piece, top, bottom);
+            Determine_Game_Piece(rgb, center, unknown_game_piece, top, bottom);
 
             //draw what we know
             drawContours(drawing, contours,i, COLOR_RED, 1, 8, hierarchy, 0, Point() );

@@ -28,7 +28,7 @@ double cvt2rad(double degree);
 double cvt2degree(double radian);
 
 //Determines if the object is a yellow tote, gray tote, or green bin
-void Determine_Game_Piece(cv::Point2f center, Game_Piece& unknown_game_piece, cv::Point top, cv::Point bottom);
+void Determine_Game_Piece(cv::Mat rgb, cv::Point2f center, Game_Piece& unknown_game_piece, cv::Point top, cv::Point bottom);
 
 //Captures current frame for the new calibration image
 void Get_Calibration_Image(cv::Mat img, int key);

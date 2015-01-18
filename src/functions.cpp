@@ -56,11 +56,9 @@ double cvt2degree(double radian)
     return radian*180/CV_PI;
 }
 
-void Determine_Game_Piece(Point2f center, Game_Piece& unknown_game_piece, Point top, Point bottom)
+void Determine_Game_Piece(Mat img, Point2f center, Game_Piece& unknown_game_piece, Point top, Point bottom)
 {
     char str[50];
-    Mat img = kinectRGB(0);
-    cvtColor(img, img, CV_BGR2RGB);
     Vec3b color = img.at<Vec3b>(center);
     circle(img, center, 2, COLOR_RED, 1, 8, 0);
 

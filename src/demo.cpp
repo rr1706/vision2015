@@ -6,6 +6,8 @@
 #include "tracker.hpp"
 #include "util.hpp"
 #include <signal.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 using namespace cv;
 using namespace std;
@@ -66,7 +68,7 @@ int irtest() {
 }
 
 int depth() {
-    Mat img;
+    Mat depth, rgb;
     namedWindow("Drawing", CV_WINDOW_AUTOSIZE);
     //namedWindow("Calibrated", CV_WINDOW_AUTOSIZE);
     DECLARE_TIMING(Timer);
@@ -75,13 +77,16 @@ int depth() {
     DepthTracker tracker;
     while (true) {
         ///Acquire image
-        img = kinectDepth(0);
+        depth = kinectDepth(0);
+        rgb = kinectRGB(0);
+        convertScaleAbs(depth, depth, 0.25, 0);
+        cvtColor(rgb, rgb, CV_RGB2BGR);
         int key = waitKey(1) & 0xFF;
         if (key == 27)
             break;
         if (key == ' ')
             waitKey(0);
-        vector<Game_Piece> game_pieces = tracker.find_pieces(img, key);
+        vector<Game_Piece> game_pieces = tracker.find_pieces(depth, rgb, key);
 //        imshow("Image", img);
         //vector<YellowTote> totes = find_yellow_color(img);
         //vector<YellowTote> totes_= tracker.find_totes(img);
@@ -92,6 +97,33 @@ int depth() {
         }
         START_TIMING(Timer);
 
+    }
+    cv::destroyAllWindows();
+    return 0;
+}
+
+int depthimdir() {
+    int i = 0;
+    DepthTracker tracker;
+    while (true) {
+        printf("%d\n", i);
+        Mat depth = imread("../images/green bin/depth/img_" + std::to_string(i) + ".jpg", CV_LOAD_IMAGE_GRAYSCALE);
+        Mat rgb = imread("../images/green bin/rgb/img_" + std::to_string(i) + ".jpg");
+//        Mat ir = imread("../images/green bin/ir/img_" + std::to_string(i) + ".jpg");
+
+        printf("%d %d\n", depth.rows, rgb.rows);
+        int raw = cv::waitKey(0) & 0xFFFF;
+        int key = raw & 0xFF;
+        if ((raw & 0xFF00) == 0xFF00) {
+            if (key == 0x51) {
+                i--;
+            } else if (key == 0x53) {
+                i++;
+            }
+        } else if (key == 27) {
+            break;
+        }
+        vector<Game_Piece> game_pieces = tracker.find_pieces(depth, rgb, key);
     }
     cv::destroyAllWindows();
     return 0;
@@ -123,6 +155,52 @@ int basictimer()
     return 0;
 }
 
+int record()
+{
+    Mat depth, rgb, ir;
+    bool cameraMode = true;
+    int i = 0;
+    mkdir("../record", 0755);
+    mkdir("../record/depth", 0755);
+    mkdir("../record/rgb", 0755);
+    mkdir("../record/ir", 0755);
+    namedWindow("Depth");
+    namedWindow("RGB");
+    namedWindow("IR");
+    while (true) {
+        puts("Frame");
+        depth = kinectDepth(0);
+        rgb = kinectRGB(0);
+//        ir = kinectIR(0);
+        convertScaleAbs(depth, depth, 0.25, 0);
+        cvtColor(rgb, rgb, CV_RGB2BGR);
+        imshow("Depth", depth);
+        imshow("RGB", rgb);
+//        imshow("IR", ir);
+        imwrite("../record/depth/img_" + to_string(i) + ".jpg", depth);
+        imwrite("../record/rgb/img_" + to_string(i++) + ".jpg", rgb);
+//        imwrite("../record/ir/img_" + to_string(i++) + ".jpg", ir);
+        int key;
+        if (cameraMode) {
+            key = waitKey(0);
+        } else {
+            key = waitKey(1);
+        }
+        switch (key & 0xFF) {
+        case 'c':
+            cameraMode = !cameraMode;
+            break;
+        case ' ':
+            break;
+        case 27:
+            puts("Quitting.");
+            return 0;
+        }
+    }
+    cv::destroyAllWindows();
+    return 0;
+}
+
 void handle_signal(int signum)
 {
     if (signum == SIGINT || signum == SIGTERM)
@@ -132,5 +210,5 @@ void handle_signal(int signum)
 int main() {
     signal(SIGINT, handle_signal);
     signal(SIGTERM, handle_signal);
-    return depth();
+    return depthimdir();
 }

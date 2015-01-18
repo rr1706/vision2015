@@ -42,7 +42,7 @@ public:
 
 class DepthTracker {
 public:
-    std::vector<Game_Piece> find_pieces(cv::Mat image, int key);
+    std::vector<Game_Piece> find_pieces(cv::Mat image, cv::Mat rgb, int key);
 };
 
 class IRTracker {
