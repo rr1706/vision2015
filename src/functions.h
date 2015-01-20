@@ -79,10 +79,15 @@ bool tote_on_bottom(cv::Mat img, cv::Point2f bottom);
 //Populates stacked_totes and unstacked_totes with the approapriate detected_totes
 void determine_stacked(std::vector<YellowTote> detected_totes, std::vector<std::vector<YellowTote> >& stacked_totes, std::vector<YellowTote>& unstacked_totes, cv::Mat img);
 
+//Print the color data in 3-channel format on a box drawn of the color
 void print_color(cv::Mat &img, cv::Scalar color, cv::Point2i location);
 
+//Run inRange for two color schemes and OR them together and return the resulting binary image
 cv::Mat multiple_threshold(cv::Mat img, cv::Scalar hsv_min, cv::Scalar hsv_max,
                            cv::Scalar rgb_min, cv::Scalar rgb_max);
+
+//Matches logos to boxes and stores them in totes.
+void Match_logo_totes(cv::Mat img, std::vector<std::vector<cv::Point> > box, std::vector<std::vector<cv::Point> > logo, std::vector<YellowTote>& tote);
 
 #endif // FUNCTIONS_H
 

@@ -534,3 +534,65 @@ Mat multiple_threshold(Mat img, Scalar hsv_min, Scalar hsv_max,
     result = result_hsv | result_rgb;
     return result;
 }
+
+void Match_logo_totes(Mat img, vector<vector<Point> > box, vector<vector<Point> > logo, vector<YellowTote>& tote)
+{
+    //loop through every box
+    for(unsigned int i = 0; i < box.size(); i++)
+    {
+        Moments moment = moments(box[i], false);
+        Point2f box_center = Point2f(moment.m10/moment.m00, moment.m01/moment.m00);
+        circle(img, box_center, 3, COLOR_RED, 3);
+        //all we see is the long side of 1 or more yellow totes.
+        if(logo.size() == 0)
+        {
+            tote[i].set_center(box_center);
+            box_center = Point2f(box_center.x - (img.cols / 2.), -(box_center.y - (img.rows / 2.)));
+            tote[i].set_xrot((box_center.x / (img.cols / 2.)) * (fov.x / 2.));
+            tote[i].set_offset(90);
+            Display_YellowTote(tote[i], img, tote[i].get_center());
+        }
+        for(unsigned int j = 0; j < logo.size(); j++)
+        {
+            Moments moment = moments(logo[i], false);
+            Point2f logo_center = Point2f(moment.m10/moment.m00, moment.m01/moment.m00);
+            circle(img, logo_center, 3, COLOR_BLUE, 3);
+
+            //if the two centers are close, they are a match.
+            if(distance(box_center, logo_center) < 35)
+            {
+                tote[i].set_center(box_center);
+
+                //Remap the center from the top left to the center of the screen
+                //for tote_center and logo_center
+                box_center = Point2f(box_center.x - (img.cols / 2.), -(box_center.y - (img.rows / 2.)));
+                logo_center = Point2f(logo_center.x - (img.cols / 2.), -(logo_center.y - (img.rows / 2.)));
+
+                //Calculate x rotation to tote_center and logo_center
+                tote[i].set_xrot((box_center.x / (img.cols / 2.)) * (fov.x / 2.));
+                tote[i].set_offset((box_center.x - logo_center.x) / (img.cols) * (fov.x));
+            }
+            else //this box doesn't have a matching logo, we're looking at it's long side
+            {
+                tote[i].set_center(box_center);
+                box_center = Point2f(box_center.x - (img.cols / 2.), -(box_center.y - (img.rows / 2.)));
+                tote[i].set_xrot((box_center.x / (img.cols / 2.)) * (fov.x / 2.));
+                tote[i].set_offset(90);
+                Display_YellowTote(tote[i], img, tote[i].get_center());
+            }
+        }
+    }
+    //Determine if yellow totes are stacked
+    for(int i = 0; tote.size(); i++)
+    {
+        int stack_height = 1;
+        for(unsigned int j = i+1; j < tote.size(); j++)
+        {
+            if(abs(tote[i].get_center_x() - tote[j].get_center_x()) < 10)
+            {
+                stack_height++;
+            }
+        }
+        tote[i].set_stacked(stack_height);
+    }
+}
