@@ -6,6 +6,13 @@
 
 const cv::Point2f fov(58, 45);
 
+enum Piece_Type {
+    OBJECT_UNKNOWN = 0,
+    OBJECT_GREY_TOTE = 1,
+    OBJECT_YELLOW_TOTE = 2,
+    OBJECT_GREEN_BIN = 3
+};
+
 class Game_Piece {
 private:
     float x_rot;
@@ -33,6 +40,7 @@ public:
     float get_rotation();
     int get_totes_high();
     int get_piece_type();
+    std::string get_piece_type_str();
     bool get_green_bin();
 
     friend void Display_Game_Piece(const Game_Piece object, cv::Mat img, cv::Point origin);

@@ -74,7 +74,6 @@ Vec3b scalar2vec(Scalar input)
 
 void Determine_Game_Piece(Mat img, Point2f, Game_Piece& unknown_game_piece, Point top, Point bottom)
 {
-    cvtColor(img, img, CV_BGR2RGB);
     Point toteCheckpoint = bottom - Point(0, 40);
     Point binCheckpoint = top + Point(0, 80);
     Vec3b color = img.at<Vec3b>(toteCheckpoint);
@@ -83,48 +82,28 @@ void Determine_Game_Piece(Mat img, Point2f, Game_Piece& unknown_game_piece, Poin
     print_color(img, vec2scalar(color), toteCheckpoint);
     print_color(img, vec2scalar(top_color), binCheckpoint);
 
-    //Yellow Tote
-    if(color[0] <= yellow_tote[0] + color_tolerance &&
-            color[1] <= yellow_tote[1] + color_tolerance &&
-            color[2] <= yellow_tote[2] + color_tolerance &&
-            color[0] >= yellow_tote[0] - color_tolerance &&
-            color[1] >= yellow_tote[1] - color_tolerance &&
-            color[2] >= yellow_tote[2] - color_tolerance)
-    {
+    Mat yellowthresh = multiple_threshold(img, yellow_tote_min_hsv, yellow_tote_max_hsv, Scalar(0,0,0), Scalar(0,0,0));
+    Mat greenthresh = multiple_threshold(img, green_bin_min_hsv, green_bin_max_hsv, green_bin_min_rgb, green_bin_max_rgb);
+    Mat greythresh = multiple_threshold(img, grey_tote_min_hsv, grey_tote_max_hsv, grey_tote_min_rgb, grey_tote_max_rgb);
 
-        unknown_game_piece.set_piece_type(2);
-    }
-    //Gray Tote
-    else if(color[0] <= gray_tote[0] + color_tolerance &&
-            color[1] <= gray_tote[1] + color_tolerance &&
-            color[2] <= gray_tote[2] + color_tolerance &&
-            color[0] >= gray_tote[0] - color_tolerance &&
-            color[1] >= gray_tote[1] - color_tolerance &&
-            color[2] >= gray_tote[2] - color_tolerance)
-    {
-        unknown_game_piece.set_piece_type(1);
-
-    }
-    //Green Bin
-    else if(color[0] <= green_bin[0] + color_tolerance &&
-            color[1] <= green_bin[1] + color_tolerance &&
-            color[2] <= green_bin[2] + color_tolerance &&
-            color[0] >= green_bin[0] - color_tolerance &&
-            color[1] >= green_bin[1] - color_tolerance &&
-            color[2] >= green_bin[2] - color_tolerance)
-    {
-        unknown_game_piece.set_piece_type(3);
+    if (yellowthresh.at<uint8_t>(toteCheckpoint) > 0) {
+        unknown_game_piece.set_piece_type(OBJECT_YELLOW_TOTE);
+    } else if (greythresh.at<uint8_t>(toteCheckpoint) > 0) {
+        unknown_game_piece.set_piece_type(OBJECT_GREY_TOTE);
+    } else if (greenthresh.at<uint8_t>(toteCheckpoint) > 0) {
+        unknown_game_piece.set_piece_type(OBJECT_GREEN_BIN);
+    } else {
+        unknown_game_piece.set_piece_type(OBJECT_UNKNOWN);
     }
 
-    if(unknown_game_piece.get_piece_type() == 1 && green_bin_top(img, binCheckpoint))
+    if(unknown_game_piece.get_piece_type() == OBJECT_GREY_TOTE && green_bin_top(img, binCheckpoint))
     {
         unknown_game_piece.set_green_bin(true);
     }
-    if(unknown_game_piece.get_piece_type() == 3 && tote_on_bottom(img, toteCheckpoint))
+    if(unknown_game_piece.get_piece_type() == OBJECT_GREEN_BIN && tote_on_bottom(img, toteCheckpoint))
     {
-        unknown_game_piece.set_piece_type(1);
+        unknown_game_piece.set_piece_type(OBJECT_GREY_TOTE);
     }
-    cvtColor(img, img, CV_RGB2BGR);
     imshow("RGB", img);
     return;
 }
@@ -481,44 +460,14 @@ Point get_closest_point(Mat img, vector<Point> contour)
 
 bool green_bin_top(Mat img, Point2f top)
 {
-    bool green_bin_on_top = false;
-    Vec3b color = img.at<Vec3b>(top);
-    //Check to see if the top pixel is of a green bin
-    if(color[0] <= green_bin[0] + color_tolerance &&
-            color[1] <= green_bin[1] + color_tolerance &&
-            color[2] <= green_bin[2] + color_tolerance &&
-            color[0] >= green_bin[0] - color_tolerance &&
-            color[1] >= green_bin[1] - color_tolerance &&
-            color[2] >= green_bin[2] - color_tolerance)
-    {
-        green_bin_on_top = true;
-    }
-
-    return green_bin_on_top;
+    Mat thresh = multiple_threshold(img, green_bin_min_hsv, green_bin_max_hsv, green_bin_min_rgb, green_bin_max_rgb);
+    return thresh.at<uint8_t>(top) > 0;
 }
 
 bool tote_on_bottom(Mat img, Point2f bottom)
 {
-    {
-        bool tote_on_bottom = false;
-        Vec3b color = img.at<Vec3b>(bottom);
-        printf("r%d g%d b%d\r\n", color[0], color[1], color[2]);
-        //Check to see if the bottom pixel is of a gray tote
-        //Gray Tote
-        if(color[0] <= gray_tote[0] + color_tolerance &&
-                color[1] <= gray_tote[1] + color_tolerance &&
-                color[2] <= gray_tote[2] + color_tolerance &&
-                color[0] >= gray_tote[0] - color_tolerance &&
-                color[1] >= gray_tote[1] - color_tolerance &&
-                color[2] >= gray_tote[2] - color_tolerance)
-        {
-            tote_on_bottom = true;
-
-        }
-
-
-        return tote_on_bottom;
-    }
+    Mat thresh = multiple_threshold(img, grey_tote_min_hsv, grey_tote_max_hsv, grey_tote_min_rgb, grey_tote_max_rgb);
+    return thresh.at<uint8_t>(bottom) > 0;
 }
 
 vector<YellowTote> pairTotes(vector<SingleL> singles)
@@ -572,4 +521,16 @@ void print_color(Mat &img, Scalar color, Point2i location)
     sprintf(colorStr, "(%03d,%03d,%03d)", saneColor[0], saneColor[1], saneColor[2]);
     putText(img, colorStr, location, CV_FONT_HERSHEY_PLAIN, 1, COLOR_WHITE);
     circle(img, location, 2, COLOR_BLACK, 1);
+}
+
+Mat multiple_threshold(Mat img, Scalar hsv_min, Scalar hsv_max,
+                       Scalar rgb_min, Scalar rgb_max)
+{
+    Mat hsv, rgb, result, result_hsv, result_rgb;
+    cvtColor(img, hsv, CV_BGR2HSV);
+    cvtColor(img, rgb, CV_BGR2RGB);
+    inRange(hsv, hsv_min, hsv_max, result_hsv);
+    inRange(rgb, rgb_min, rgb_max, result_rgb);
+    result = result_hsv | result_rgb;
+    return result;
 }

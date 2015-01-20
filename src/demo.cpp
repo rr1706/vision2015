@@ -215,5 +215,5 @@ void handle_signal(int signum)
 int main() {
     signal(SIGINT, handle_signal);
     signal(SIGTERM, handle_signal);
-    return depthimdir();
+    return depth();
 }

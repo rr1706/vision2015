@@ -10,7 +10,8 @@ using namespace std;
 using namespace cv;
 
 //Class Game Piece functions
-Game_Piece::Game_Piece() : x_rot(99), distance(-1), totes_high(-1),rotation(-99), piece_type(-1), green_bin_top(false)
+Game_Piece::Game_Piece() : x_rot(99), distance(-1), rotation(-99),
+    totes_high(-1), piece_type(0), green_bin_top(false)
 {
 }
 
@@ -76,6 +77,20 @@ bool Game_Piece::get_green_bin()
     return green_bin_top;
 }
 
+std::string Game_Piece::get_piece_type_str()
+{
+    switch (get_piece_type()) {
+    case OBJECT_GREY_TOTE:
+        return "Grey Tote";
+    case OBJECT_YELLOW_TOTE:
+        return "Yellow Tote";
+    case OBJECT_GREEN_BIN:
+        return "Green Bin";
+    default:
+        return "Unknown";
+    }
+}
+
 void Display_Game_Piece(Game_Piece object, Mat img, Point origin)
 {
     origin = origin - Point(100, 50);
@@ -92,7 +107,7 @@ void Display_Game_Piece(Game_Piece object, Mat img, Point origin)
     sprintf(str, "Rotation = %.2f",object.get_rotation());
     putText(img, str,Point(origin.x+15, origin.y+60), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_BLUE,1,8,false);
 
-    sprintf(str, "Game Piece type = %d",object.get_piece_type());
+    sprintf(str, "Game Piece type = %s", object.get_piece_type_str().c_str());
     putText(img, str,Point(origin.x+15, origin.y+80), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_BLUE,1,8,false);
 
     sprintf(str, "Totes high = %d",object.get_totes_high());

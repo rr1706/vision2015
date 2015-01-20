@@ -13,9 +13,10 @@ std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, Mat rgb, int key)
     Mat calibrate, calibrated, thresholded, thresholded2, dst, detected_edges, drawing;
 
     puts("WARN change calibrate image at depth.cpp:16 to something else");
-    calibrate = imread("../images/green bin/depth/img_0.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+    calibrate = imread("./Calibrate.png", CV_LOAD_IMAGE_GRAYSCALE);
 
     Get_Calibration_Image(img, key);
+    blur(rgb, rgb, Size(20,20), Point(-1,-1), BORDER_CONSTANT);
 
     ///Delete the floor and static targets
     calibrated = calibrate - img-1;

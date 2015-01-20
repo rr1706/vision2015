@@ -81,5 +81,8 @@ void determine_stacked(std::vector<YellowTote> detected_totes, std::vector<std::
 
 void print_color(cv::Mat &img, cv::Scalar color, cv::Point2i location);
 
+cv::Mat multiple_threshold(cv::Mat img, cv::Scalar hsv_min, cv::Scalar hsv_max,
+                           cv::Scalar rgb_min, cv::Scalar rgb_max);
+
 #endif // FUNCTIONS_H
 
