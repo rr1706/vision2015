@@ -6,9 +6,12 @@ from the Microsoft Kinect v1 and return it as a cv::Mat*/
 #include "libfreenect.h"
 #include "libfreenect_sync.h"
 #endif
+#ifdef __APPLE__
+#include <libfreenect/libfreenect_sync.h>
+#endif
 #include "free.hpp"
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__APPLE__)
 cv::Mat kinectDepth(int index)
 {
     static char *data = 0;
