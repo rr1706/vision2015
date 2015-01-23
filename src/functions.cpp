@@ -269,7 +269,7 @@ void determine_stacked( vector<YellowTote> detected_totes, vector< vector<Yellow
 }
 
 //broken code
-//vector<float> Average_Distance(Mat image, vector<vector<Point>> contours, Rect roi)
+//float Average_Distance(Mat image, vector<Point> contours)
 //{
 //    Mat labels = Mat::zeros(image.size(), CV_8UC1);
 //    vector<float> cont_avgs(contours.size(), 0.f);
@@ -280,6 +280,18 @@ void determine_stacked( vector<YellowTote> detected_totes, vector< vector<Yellow
 //        cont_avgs[i] = mean[0];
 //    }
 //}
+
+void seperate_Contours(Mat img, vector<Point> contours, vector<Point> close, vector<Point> back)
+{
+    //Average_Distance(img, contours);
+    //calculate average distance of the pixels above the average distance
+    //calclate the standard deviation.
+    //save every point that is within two s.ds of this average to a vector point closer
+
+    //calculate the average distance of the pixels below the average distance
+    //calculate the standard deviation of this value
+    //save every point that is within two s.ds of this average to a vector point back
+}
 
 //someone make a document with a step by step process of this math
 //and put it somewhere online so we can link to it in a comment.
@@ -583,9 +595,7 @@ void Laplacian( Mat& src, Mat& dst)
     Laplacian( src, dst, ddepth, kernel_size, scale, delta, BORDER_DEFAULT );
     convertScaleAbs( dst, dst );
 
-    //threshold(img, img, 25, 45, CV_THRESH_BINARY);
-
-    imshow("Laplacian", dst );
+    threshold(dst, dst, 5, 75, CV_THRESH_BINARY);
 }
 
 float calculate_distance(Point2f center)

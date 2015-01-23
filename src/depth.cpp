@@ -17,9 +17,11 @@ std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, Mat rgb, Mat &output)
     blur(rgb, rgb, Size(20,20), Point(-1,-1), BORDER_CONSTANT);
 
     //Blur the image to smooth it
-    blur(img, img, Size(3,3), Point(-1,-1), BORDER_CONSTANT);
+    //blur(img, img, Size(3,3), Point(-1,-1), BORDER_CONSTANT);
 
     Laplacian(img, detected_edges);
+
+    imshow("detected edges", detected_edges);
 
     ///Make sure these Mat's are empty
     dst = Scalar::all(0);
@@ -43,6 +45,11 @@ std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, Mat rgb, Mat &output)
     {
         if(contourArea(contours[i])>2500 && contourArea(contours[i]) < 500000)
         {
+
+            vector<Point> close, back;
+            seperate_Contours(img, contours[i], close, back);
+
+            drawContours(drawing, contours, i, COLOR_RED, 1, 8);
 
             //todo: differentiate between two objects that are overlapping
             //Calculate average distance to a contour (by averaging the distance to every pixel in the contour
