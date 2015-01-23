@@ -47,8 +47,9 @@ int irtest() {
     IRTracker tracker;
     while (true) {
         ///Acquire image
-        //img = kinectDepth(0);
-        img = imread("../images/ir.png", CV_LOAD_IMAGE_GRAYSCALE);
+//        img = kinectDepth(0);
+//        img = imread("../images/ir.png", CV_LOAD_IMAGE_GRAYSCALE);
+        img = kinectIR(0);
         int key = waitKey(1) & 0xFF;
         if (key == 27)
             break;
@@ -68,8 +69,8 @@ int irtest() {
 }
 
 int depth() {
-    Mat depth, rgb;
-    namedWindow("Drawing", CV_WINDOW_AUTOSIZE);
+    Mat depth, rgb, drawing;
+    namedWindow("Drawing", CV_WINDOW_NORMAL);
     //namedWindow("Calibrated", CV_WINDOW_AUTOSIZE);
     DECLARE_TIMING(Timer);
     START_TIMING(Timer);
@@ -86,7 +87,7 @@ int depth() {
             break;
         if (key == ' ')
             waitKey(0);
-        vector<Game_Piece> game_pieces = tracker.find_pieces(depth, rgb, key);
+        vector<Game_Piece> game_pieces = tracker.find_pieces(depth, rgb, key, drawing);
 //        imshow("Image", img);
         //vector<YellowTote> totes = find_yellow_color(img);
         //vector<YellowTote> totes_= tracker.find_totes(img);
@@ -102,6 +103,40 @@ int depth() {
     return 0;
 }
 
+int depthvideo() {
+    Mat depth, rgb, drawing;
+    namedWindow("Drawing", CV_WINDOW_NORMAL);
+    DECLARE_TIMING(Timer);
+    START_TIMING(Timer);
+    double frame_time_ms;
+    DepthTracker tracker;
+    VideoWriter writer("output.avi", CV_FOURCC('M', 'J', 'P', 'G'), 30, Size(640, 480), true);
+    while (true) {
+        ///Acquire image
+        depth = kinectDepth(0);
+        rgb = kinectRGB(0);
+        convertScaleAbs(depth, depth, 0.25, 0);
+        cvtColor(rgb, rgb, CV_RGB2BGR);
+        int key = waitKey(1) & 0xFF;
+        if (key == 27)
+            break;
+        if (key == ' ')
+            waitKey(0);
+        vector<Game_Piece> game_pieces = tracker.find_pieces(depth, rgb, key, drawing);
+        writer << drawing;
+        STOP_TIMING(Timer);
+        frame_time_ms = GET_TIMING(Timer);
+        if (frame_time_ms > 0) {
+            printf("Current FPS = %.1f\n", 1000/frame_time_ms);
+        }
+        START_TIMING(Timer);
+
+    }
+    writer.release();
+    cv::destroyAllWindows();
+    return 0;
+}
+
 int depthimdir() {
     int i = 0;
     int key = 0;
@@ -111,13 +146,14 @@ int depthimdir() {
     moveWindow("RGB", 0, 20);
     moveWindow("Drawing", 640, 20);
     DepthTracker tracker;
+    Mat drawing;
     while (true) {
         printf("<< ../images/green bin/*/img_%d.jpg\n", i);
         Mat depth = imread("../images/green bin/depth/img_" + std::to_string(i) + ".jpg", CV_LOAD_IMAGE_GRAYSCALE);
         Mat rgb = imread("../images/green bin/rgb/img_" + std::to_string(i) + ".jpg");
 //        Mat ir = imread("../images/green bin/ir/img_" + std::to_string(i) + ".jpg");
 
-        vector<Game_Piece> game_pieces = tracker.find_pieces(depth, rgb, key);
+        vector<Game_Piece> game_pieces = tracker.find_pieces(depth, rgb, key, drawing);
         int raw = cv::waitKey(0) & 0xFFFF;
         key = raw & 0xFF;
         if ((raw & 0xFF00) == 0xFF00) {
@@ -215,5 +251,5 @@ void handle_signal(int signum)
 int main() {
     signal(SIGINT, handle_signal);
     signal(SIGTERM, handle_signal);
-    return depth();
+    return depthvideo();
 }

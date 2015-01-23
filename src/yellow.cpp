@@ -107,13 +107,13 @@ void Display_Game_Piece(Game_Piece object, Mat img, Point origin)
     sprintf(str, "Rotation = %.2f",object.get_rotation());
     putText(img, str,Point(origin.x+15, origin.y+60), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_BLUE,1,8,false);
 
-    sprintf(str, "Game Piece type = %s", object.get_piece_type_str().c_str());
+    sprintf(str, "Type = %s", object.get_piece_type_str().c_str());
     putText(img, str,Point(origin.x+15, origin.y+80), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_BLUE,1,8,false);
 
     sprintf(str, "Totes high = %d",object.get_totes_high());
     putText(img, str,Point(origin.x+15, origin.y+100), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_BLUE,1,8,false);
 
-    sprintf(str, "Green bin on top? = %d",object.get_green_bin());
+    sprintf(str, "Green bin top? = %d",object.get_green_bin());
     putText(img, str,Point(origin.x+15, origin.y+120), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_BLUE,1,8,false);
 }
 
@@ -147,6 +147,11 @@ void YellowTote::set_center(Point2f c)
 {
     center.x = c.x;
     center.y = c.y;
+}
+
+void YellowTote::set_offset(double offset)
+{
+    this->offset = offset;
 }
 
 //accessors
@@ -183,6 +188,11 @@ float YellowTote::get_center_x()
 float YellowTote::get_center_y()
 {
     return center.y;
+}
+
+double YellowTote::get_offset()
+{
+    return offset;
 }
 
 bool operator==(YellowTote& one, YellowTote& two)

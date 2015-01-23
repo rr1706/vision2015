@@ -59,6 +59,7 @@ private:
     double xrot;
     int stack_height;
     cv::Point2f center;
+    double offset;
 
 public:
     YellowTote();
@@ -70,6 +71,7 @@ public:
     void set_xrot(double rotation);
     void set_stacked(int stacked);
     void set_center(cv::Point2f c);
+    void set_offset(double offset);
 
     //accessors
     Side get_side();
@@ -79,6 +81,7 @@ public:
     cv::Point2f get_center();
     float get_center_x();
     float get_center_y();
+    double get_offset();
 
     //functions
     friend void Display_YellowTote(const YellowTote tote, cv::Mat img, cv::Point origin);

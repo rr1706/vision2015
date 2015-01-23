@@ -8,7 +8,7 @@
 using namespace cv;
 using namespace std;
 
-std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, Mat rgb, int key)
+std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, Mat rgb, int key, Mat &output)
 {
     Mat calibrate, calibrated, thresholded, thresholded2, dst, detected_edges, drawing;
 
@@ -124,6 +124,7 @@ std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, Mat rgb, int key)
             Display_Game_Piece(unknown_game_piece, drawing, center);
         }
     }
+    drawing.copyTo(output);
 
     imshow("Drawing", drawing);
     imshow("Calibrated", thresholded2);
