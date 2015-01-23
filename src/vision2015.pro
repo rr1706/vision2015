@@ -10,7 +10,8 @@ SOURCES += demo.cpp \
     functions.cpp \
     color.cpp \
     depth.cpp \
-    ir.cpp
+    ir.cpp \
+    solutionlog.cpp
 
 HEADERS += \
     util.hpp \
@@ -19,7 +20,8 @@ HEADERS += \
     udpsender.hpp \
     timer.h \
     functions.h \
-    tracker.hpp
+    tracker.hpp \
+    solutionlog.hpp
 
 unix:LIBS += -lopencv_core -lopencv_imgproc -lopencv_highgui -lfreenect_sync
 INCLUDEPATH += ../lib

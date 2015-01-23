@@ -2,12 +2,14 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <stdint.h>
+#include <ctime>
 #include "util.hpp"
 #include <free.hpp>
 #include "yellow.hpp"
 #include "functions.h"
 #include "tracker.hpp"
 #include "udpsender.hpp"
+#include "solutionlog.hpp"
 
 using namespace cv;
 using namespace std;
@@ -608,7 +610,9 @@ float calculate_distance(Point2f center)
 
 void send_udp(std::vector<Game_Piece> pieces)
 {
-    static UdpSender udp("10.17.6.2", "www");
+    static int iter = 0;
+    static UdpSender udp("10.17.6.2", "http");
+    static SolutionLog lg("vision_output.csv", {"iter", "clock", "xrot", "distance", "rotation", "green", "type", "height"});
     auto closest = pieces.end();
     for (auto it = pieces.begin(); it < pieces.end(); ++it) {
         if (closest == pieces.end() || it->get_distance() < closest->get_distance()) {
@@ -617,6 +621,15 @@ void send_udp(std::vector<Game_Piece> pieces)
     }
     if (closest != pieces.end()) {
         udp.send(*closest);
+        lg.log("iter", iter++);
+        lg.log("clock", static_cast<double>(clock()) / CLOCKS_PER_SEC);
+        lg.log("xrot", closest->get_xrot());
+        lg.log("distance", closest->get_distance());
+        lg.log("rotation", closest->get_rotation());
+        lg.log("green", closest->get_green_bin());
+        lg.log("type", closest->get_piece_type());
+        lg.log("height", closest->get_totes_high());
+        lg.flush();
     }
 }
 

@@ -123,6 +123,7 @@ int depthvideo() {
         if (key == ' ')
             waitKey(0);
         vector<Game_Piece> game_pieces = tracker.find_pieces(depth, rgb, drawing);
+        send_udp(game_pieces);
         writer << drawing;
         STOP_TIMING(Timer);
         frame_time_ms = GET_TIMING(Timer);
