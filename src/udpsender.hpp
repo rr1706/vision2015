@@ -7,6 +7,8 @@
 
 #include <string>
 
+#include "yellow.hpp"
+
 class UdpSender
 {
 private:
@@ -14,7 +16,7 @@ private:
 public:
     UdpSender(std::string hostname, std::string service);
     ~UdpSender();
-    void send(int data1);
+    void send(Game_Piece piece);
 };
 
 #endif // UDPSENDER_HPP

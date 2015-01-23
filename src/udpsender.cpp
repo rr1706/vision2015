@@ -34,13 +34,20 @@ UdpSender::~UdpSender()
     freeaddrinfo(this->result);
 }
 
-void UdpSender::send(int data1)
+void UdpSender::send(Game_Piece piece)
 {
     struct addrinfo *rp;
     int sock;
     char buf[255];
 
-    sprintf(buf, "%d", data1);
+    sprintf(buf, "%f %f %f %d %d %d\n",
+            piece.get_xrot(),       // same as in ultimate ascent
+            piece.get_distance(),   // distance away in centimeters
+            piece.get_rotation(),   // square-up rotation
+            piece.get_green_bin(),  // 1 - has green bin on top, 0 - no green bin on top
+            piece.get_piece_type(), // 0 - unknown, 1 - gray, 2 - yellow, 3 - green bin solo
+            piece.get_totes_high()  // 0 - 6, totes in stack
+            );
 
     for (rp = this->result; rp != NULL; rp = rp->ai_next) {
         sock = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);

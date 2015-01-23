@@ -2,6 +2,7 @@
 #define FUNCTIONS_H
 
 #include <opencv2/core/core.hpp>
+#include <vector>
 #include "yellow.hpp"
 
 
@@ -84,6 +85,8 @@ void Match_logo_totes(cv::Mat img, std::vector<std::vector<cv::Point> > box, std
 float calculate_distance(cv::Point2f center);
 
 void Laplacian( cv::Mat& src, cv::Mat& dst);
+
+void send_udp(std::vector<Game_Piece> pieces);
 
 #endif // FUNCTIONS_H
 

@@ -7,6 +7,7 @@
 #include "yellow.hpp"
 #include "functions.h"
 #include "tracker.hpp"
+#include "udpsender.hpp"
 
 using namespace cv;
 using namespace std;
@@ -594,3 +595,18 @@ float calculate_distance(Point2f center)
     distance = adjacent*tan(cvt2rad(y_rot));
     return distance;
 }
+
+void send_udp(std::vector<Game_Piece> pieces)
+{
+    static UdpSender udp("10.17.6.2", "www");
+    auto closest = pieces.end();
+    for (auto it = pieces.begin(); it < pieces.end(); ++it) {
+        if (closest == pieces.end() || it->get_distance() < closest->get_distance()) {
+            closest = it;
+        }
+    }
+    if (closest != pieces.end()) {
+        udp.send(*closest);
+    }
+}
+
