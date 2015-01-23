@@ -154,6 +154,11 @@ void YellowTote::set_offset(double offset)
     this->offset = offset;
 }
 
+void YellowTote::set_distance(double distance)
+{
+    this->distance = distance;
+}
+
 //accessors
 Side YellowTote::get_side()
 {
@@ -193,6 +198,11 @@ float YellowTote::get_center_y()
 double YellowTote::get_offset()
 {
     return offset;
+}
+
+double YellowTote::get_distance()
+{
+    return distance;
 }
 
 bool operator==(YellowTote& one, YellowTote& two)

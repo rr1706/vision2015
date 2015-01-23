@@ -12,6 +12,11 @@
 
 static cv::Mat kern = cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3), cv::Point(-1, -1));
 
+const float camera_height = 50; //in
+const float camera_angle = 15; //degrees
+const float tote_center_height = 5; //in
+const float adjacent = camera_height - tote_center_height; //in
+
 //Subject to change
 const int max_area = 1000000;
 const int min_area = 100;

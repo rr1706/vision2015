@@ -13,10 +13,10 @@ using namespace cv;
 
 vector<YellowTote> ColorTracker::find_totes(Mat img)
 {
-    vector<YellowTote> totes;
-
     Mat hsv, binary, draw;
     draw = img.clone();
+
+    //todo: do connor's multithresh process here, doesn't have to be before the code release.
 
     //convert the img from color to hsv
     cvtColor(img, hsv, CV_BGR2HSV);
@@ -30,22 +30,24 @@ vector<YellowTote> ColorTracker::find_totes(Mat img)
     DEBUG_SHOW("binary image", binary);
 
     vector<vector<Point> > contour;
+    vector<Vec4i> hierarchy;
     vector<vector<Point> > logo;
     vector<vector<Point> > box;
-    vector<Vec4i> hierarchy;
     findContours(binary, contour, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
+
+    vector<YellowTote> totes(contour.size());
 
     for (size_t i = 0; i < contour.size(); i++)
     {
         //If the contour is too small, throw it out
         //play around with this value
-        if (contourArea(contour[i]) < 150)
+        if (contourArea(contour[i]) < 100)
         {
             continue;
         }
 
         //store totes in the vvP box and logos in vvP logo
-        if(contourArea(contour[i]) > 5000) //tote
+        if(contourArea(contour[i]) > 4000) //tote
         {
             box.push_back(contour[i]);
         }
@@ -55,10 +57,15 @@ vector<YellowTote> ColorTracker::find_totes(Mat img)
         }
     }
 
+    printf("box size = %lu\n", box.size());
+    printf("logo size = %lu\n", logo.size());
+
     Match_logo_totes(draw, box, logo, totes);
+
 
     for(size_t i = 0; i < totes.size(); i ++)
     {
+        totes[i].set_distance(calculate_distance(totes[i].get_center()));
         Display_YellowTote(totes[i], draw, totes[i].get_center());
     }
 

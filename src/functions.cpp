@@ -538,7 +538,7 @@ Mat multiple_threshold(Mat img, Scalar hsv_min, Scalar hsv_max,
 void Match_logo_totes(Mat img, vector<vector<Point> > box, vector<vector<Point> > logo, vector<YellowTote>& tote)
 {
     //loop through every box
-    for(unsigned int i = 0; i < box.size(); i++)
+    for(size_t i = 0; i < box.size(); i++)
     {
         Moments moment = moments(box[i], false);
         Point2f box_center = Point2f(moment.m10/moment.m00, moment.m01/moment.m00);
@@ -546,15 +546,15 @@ void Match_logo_totes(Mat img, vector<vector<Point> > box, vector<vector<Point> 
         //all we see is the long side of 1 or more yellow totes.
         if(logo.size() == 0)
         {
-            tote[i].set_center(box_center);
+            //tote[i].set_center(box_center);
             box_center = Point2f(box_center.x - (img.cols / 2.), -(box_center.y - (img.rows / 2.)));
             tote[i].set_xrot((box_center.x / (img.cols / 2.)) * (fov.x / 2.));
             tote[i].set_offset(90);
-            Display_YellowTote(tote[i], img, tote[i].get_center());
         }
-        for(unsigned int j = 0; j < logo.size(); j++)
+        //loop through every logo
+        for(size_t j = 0; j < logo.size(); j++)
         {
-            Moments moment = moments(logo[i], false);
+            Moments moment = moments(logo[j], false);
             Point2f logo_center = Point2f(moment.m10/moment.m00, moment.m01/moment.m00);
             circle(img, logo_center, 3, COLOR_BLUE, 3);
 
@@ -578,15 +578,14 @@ void Match_logo_totes(Mat img, vector<vector<Point> > box, vector<vector<Point> 
                 box_center = Point2f(box_center.x - (img.cols / 2.), -(box_center.y - (img.rows / 2.)));
                 tote[i].set_xrot((box_center.x / (img.cols / 2.)) * (fov.x / 2.));
                 tote[i].set_offset(90);
-                Display_YellowTote(tote[i], img, tote[i].get_center());
             }
         }
     }
     //Determine if yellow totes are stacked
-    for(int i = 0; tote.size(); i++)
+    for(size_t i = 0; tote.size(); i++)
     {
         int stack_height = 1;
-        for(unsigned int j = i+1; j < tote.size(); j++)
+        for(size_t j = i+1; j < tote.size(); j++)
         {
             if(abs(tote[i].get_center_x() - tote[j].get_center_x()) < 10)
             {
@@ -595,4 +594,12 @@ void Match_logo_totes(Mat img, vector<vector<Point> > box, vector<vector<Point> 
         }
         tote[i].set_stacked(stack_height);
     }
+}
+
+float calculate_distance(Point2f center)
+{
+    float distance = -1;
+    float y_rot = center.y * fov.y / Image_Height;
+    distance = adjacent*tan(cvt2rad(y_rot));
+    return distance;
 }
