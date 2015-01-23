@@ -87,7 +87,7 @@ int depth() {
             break;
         if (key == ' ')
             waitKey(0);
-        vector<Game_Piece> game_pieces = tracker.find_pieces(depth, rgb, key, drawing);
+        vector<Game_Piece> game_pieces = tracker.find_pieces(depth, rgb, drawing);
 //        imshow("Image", img);
         //vector<YellowTote> totes = find_yellow_color(img);
         //vector<YellowTote> totes_= tracker.find_totes(img);
@@ -122,7 +122,7 @@ int depthvideo() {
             break;
         if (key == ' ')
             waitKey(0);
-        vector<Game_Piece> game_pieces = tracker.find_pieces(depth, rgb, key, drawing);
+        vector<Game_Piece> game_pieces = tracker.find_pieces(depth, rgb, drawing);
         writer << drawing;
         STOP_TIMING(Timer);
         frame_time_ms = GET_TIMING(Timer);
@@ -153,7 +153,7 @@ int depthimdir() {
         Mat rgb = imread("../images/green bin/rgb/img_" + std::to_string(i) + ".jpg");
 //        Mat ir = imread("../images/green bin/ir/img_" + std::to_string(i) + ".jpg");
 
-        vector<Game_Piece> game_pieces = tracker.find_pieces(depth, rgb, key, drawing);
+        vector<Game_Piece> game_pieces = tracker.find_pieces(depth, rgb, drawing);
         int raw = cv::waitKey(0) & 0xFFFF;
         key = raw & 0xFF;
         if ((raw & 0xFF00) == 0xFF00) {

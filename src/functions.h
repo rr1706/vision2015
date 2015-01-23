@@ -16,11 +16,6 @@ double Calculate_Real_Distance(cv::Mat img, cv::Point2f center);
 //Determines the center of the contour passed to it
 cv::Point2f Calculate_Center(std::vector<cv::Point> contour);
 
-//Calibrates the image such that the constant
-//environment is removed, leaving only the new
-//objects.
-void Calibrate_Image(cv::Mat src, cv::Mat depth, cv::Mat dst);
-
 //Converts degrees to radians
 double cvt2rad(double degree);
 
@@ -35,9 +30,6 @@ cv::Vec3b scalar2vec(cv::Scalar input);
 
 //Determines if the object is a yellow tote, gray tote, or green bin
 void Determine_Game_Piece(cv::Mat rgb, cv::Point2f center, Game_Piece& unknown_game_piece, cv::Point top, cv::Point bottom);
-
-//Captures current frame for the new calibration image
-void Get_Calibration_Image(cv::Mat img, int key);
 
 //Calculates degrees between the point passed
 //and the center of the image
@@ -90,6 +82,8 @@ cv::Mat multiple_threshold(cv::Mat img, cv::Scalar hsv_min, cv::Scalar hsv_max,
 void Match_logo_totes(cv::Mat img, std::vector<std::vector<cv::Point> > box, std::vector<std::vector<cv::Point> > logo, std::vector<YellowTote>& tote);
 
 float calculate_distance(cv::Point2f center);
+
+void Laplacian( cv::Mat& src, cv::Mat& dst);
 
 #endif // FUNCTIONS_H
 

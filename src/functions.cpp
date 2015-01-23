@@ -33,19 +33,6 @@ Point2f Calculate_Center(vector<Point> contour)
     return Point2f(mu.m10/mu.m00, mu.m01/mu.m00);
 }
 
-void Calibrate_Image(Mat src, Mat depth, Mat dst)
-{
-    convertScaleAbs(src, depth, 0.25, 0);
-
-    Mat calibrate, calibrated, thresholded, thresholded2;
-    calibrate = imread("Calibrate.png", CV_LOAD_IMAGE_GRAYSCALE);
-
-    ///Delete the floor and static targets
-    calibrated = calibrate - depth-1;
-    threshold(calibrated, thresholded, 1, 255, CV_THRESH_BINARY_INV);
-    dst = depth - thresholded;
-}
-
 double cvt2rad(double degree)
 {
     return degree * CV_PI / 180;
@@ -179,17 +166,6 @@ int find_number_of_totes(Mat img, Game_Piece& tote, Point2f center, Point2f heig
         }
     }
     return -1;
-}
-
-void Get_Calibration_Image(Mat img, int key)
-{
-    if (key == 's') //s key pressed
-    {
-        printf("Calibrating...");
-        imwrite("./Calibrate.png", img);
-        printf("Done\n");
-    }
-    return;
 }
 
 double Calculate_Xrot(Point2f center)
@@ -594,6 +570,21 @@ void Match_logo_totes(Mat img, vector<vector<Point> > box, vector<vector<Point> 
         }
         tote[i].set_stacked(stack_height);
     }
+}
+
+void Laplacian( Mat& src, Mat& dst)
+{
+    int kernel_size = 3;
+    int scale = 1;
+    int delta = 0;
+    int ddepth = CV_16S;
+
+    Laplacian( src, dst, ddepth, kernel_size, scale, delta, BORDER_DEFAULT );
+    convertScaleAbs( dst, dst );
+
+    //threshold(img, img, 25, 45, CV_THRESH_BINARY);
+
+    imshow("Laplacian", dst );
 }
 
 float calculate_distance(Point2f center)

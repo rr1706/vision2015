@@ -8,48 +8,23 @@
 using namespace cv;
 using namespace std;
 
-std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, Mat rgb, int key, Mat &output)
+std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, Mat rgb, Mat &output)
 {
-    Mat calibrate, calibrated, thresholded, thresholded2, dst, detected_edges, drawing;
+    Mat dst, detected_edges, drawing;
 
-    puts("WARN change calibrate image at depth.cpp:16 to something else");
-    calibrate = imread("./Calibrate.png", CV_LOAD_IMAGE_GRAYSCALE);
+    dst.create( img.size(), img.type() );
 
-    Get_Calibration_Image(img, key);
     blur(rgb, rgb, Size(20,20), Point(-1,-1), BORDER_CONSTANT);
 
-    ///Delete the floor and static targets
-    calibrated = calibrate - img-1;
-    threshold(calibrated, thresholded, 1, 255, CV_THRESH_BINARY_INV);
-    thresholded2 = img - thresholded;
-
     //Blur the image to smooth it
-    blur(thresholded2, thresholded2, Size(3,3), Point(-1,-1), BORDER_CONSTANT);
+    blur(img, img, Size(3,3), Point(-1,-1), BORDER_CONSTANT);
 
-    //Eliminate Noise
-    erode(thresholded2, thresholded2 ,1, Point(0,0), 1, BORDER_CONSTANT,morphologyDefaultBorderValue());
-    dilate(thresholded2, dst ,1,Point(0,0),1, BORDER_CONSTANT,morphologyDefaultBorderValue());
-
-    /// Create a matrix of the same type and size as depth_mat (for dst)
-    dst.create( thresholded2.size(), thresholded2.type() );
-
-    ///Blur the image to smooth it
-    blur(thresholded2, thresholded2, Size(3,3), Point(-1,-1), BORDER_CONSTANT);
-
-    ///Eliminate Noise
-    erode(thresholded2, thresholded2 ,1, Point(0,0), 1, BORDER_CONSTANT,morphologyDefaultBorderValue());
-    dilate(thresholded2, detected_edges ,1,Point(0,0),1, BORDER_CONSTANT,morphologyDefaultBorderValue());
+    Laplacian(img, detected_edges);
 
     ///Make sure these Mat's are empty
     dst = Scalar::all(0);
 
     img.copyTo( dst, detected_edges);
-
-    //Calibrate_Image(img, depth, thresholded2);
-
-    //Get_Calibration_Image(depth, c);
-
-    //Process_Image(thresholded2, dst);
 
     vector<Game_Piece> game_piece;
 
@@ -127,8 +102,6 @@ std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, Mat rgb, int key, Mat
     drawing.copyTo(output);
 
     imshow("Drawing", drawing);
-    imshow("Calibrated", thresholded2);
-
 
     return game_piece;
 }
