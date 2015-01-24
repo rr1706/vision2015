@@ -86,6 +86,10 @@ float calculate_distance(cv::Point2f center);
 
 void Laplacian( cv::Mat& src, cv::Mat& dst);
 
+double contour_average_distance(cv::Mat image, Contour contour);
+
+double contour_stddev(cv::Mat image, Contour contour);
+
 void seperate_Contours(cv::Mat img, std::vector<cv::Point> contours, std::vector<cv::Point> close, std::vector<cv::Point> back);
 
 void send_udp(std::vector<Game_Piece> pieces);

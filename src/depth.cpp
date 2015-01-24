@@ -40,6 +40,7 @@ std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, Mat rgb, Mat &output)
     findContours(dst, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE, Point(0, 0) );
 
     Rect boundRect;
+    vector<Contour> polygons(contours.size());
 
     for( unsigned int i = 0; i < contours.size(); i++ )
     {
@@ -47,9 +48,17 @@ std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, Mat rgb, Mat &output)
         {
 
             vector<Point> close, back;
-            seperate_Contours(img, contours[i], close, back);
+            double stddev = contour_stddev(img, contours[i]);
+            printf("STDDEV %f\n\n", stddev);
+//            seperate_Contours(img, contours[i], close, back);
 
             drawContours(drawing, contours, i, COLOR_RED, 1, 8);
+
+            approxPolyDP(contours[i], polygons[i], 15, true);
+            if (!isContourConvex(polygons[i])) {
+                continue;
+            }
+            drawContours(drawing, polygons, i, COLOR_GREEN, 3, 8);
 
             //todo: differentiate between two objects that are overlapping
             //Calculate average distance to a contour (by averaging the distance to every pixel in the contour
@@ -99,7 +108,7 @@ std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, Mat rgb, Mat &output)
 
             //Populate our class with values that we calculated
             unknown_game_piece.set_xrot(Calculate_Xrot(center));
-            unknown_game_piece.set_distance(distance);
+            unknown_game_piece.set_distance(stddev);
 
             game_piece.push_back(unknown_game_piece);
 

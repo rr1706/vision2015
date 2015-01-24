@@ -283,13 +283,34 @@ void determine_stacked( vector<YellowTote> detected_totes, vector< vector<Yellow
 //    }
 //}
 
-void seperate_Contours(Mat img, vector<Point> contours, vector<Point> close, vector<Point> back)
+double contour_average_distance(Mat image, Contour contour)
+{
+    double average = 0;
+    for (Point pt : contour) {
+        average += Calculate_Real_Distance(image, pt);
+    }
+    return average / contour.size();
+}
+
+double contour_stddev(Mat image, Contour contour)
+{
+    double ave_dist = contour_average_distance(image, contour);
+    double variance = 0;
+    for (Point point : contour) {
+        double dist = Calculate_Real_Distance(image, point);
+        double diff_mean = ave_dist - dist;
+        variance += pow(diff_mean, 2);
+    }
+    variance = variance / contour.size();
+    return sqrt(variance);
+}
+
+void seperate_Contours(Mat img, vector<Contour> contours)
 {
     //Average_Distance(img, contours);
     //calculate average distance of the pixels above the average distance
     //calclate the standard deviation.
     //save every point that is within two s.ds of this average to a vector point closer
-
     //calculate the average distance of the pixels below the average distance
     //calculate the standard deviation of this value
     //save every point that is within two s.ds of this average to a vector point back
@@ -620,7 +641,12 @@ void send_udp(std::vector<Game_Piece> pieces)
         }
     }
     if (closest != pieces.end()) {
+        try {
         udp.send(*closest);
+        } catch (...) {
+
+        }
+
         lg.log("iter", iter++);
         lg.log("clock", static_cast<double>(clock()) / CLOCKS_PER_SEC);
         lg.log("xrot", closest->get_xrot());
