@@ -110,7 +110,8 @@ int depthvideo() {
     START_TIMING(Timer);
     double frame_time_ms;
     DepthTracker tracker;
-    VideoWriter writer("output.avi", CV_FOURCC('M', 'J', 'P', 'G'), 30, Size(640, 480), true);
+    VideoWriter writer("depth.avi", CV_FOURCC('M', 'J', 'P', 'G'), 30, Size(640, 480), true);
+    VideoWriter writerrgb("rgb.avi", CV_FOURCC('M', 'J', 'P', 'G'), 30, Size(640, 480), true);
     while (true) {
         ///Acquire image
         depth = kinectDepth(0);
@@ -122,6 +123,7 @@ int depthvideo() {
             break;
         if (key == ' ')
             waitKey(0);
+        writerrgb << rgb;
         vector<Game_Piece> game_pieces = tracker.find_pieces(depth, rgb, drawing);
         send_udp(game_pieces);
         writer << drawing;
