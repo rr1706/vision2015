@@ -21,16 +21,16 @@ const float adjacent = camera_height - tote_center_height; //in
 const int max_area = 1000000;
 const int min_area = 100;
 
-const cv::Scalar yellow_tote_min_hsv(0, 80, 100);
+const cv::Scalar yellow_tote_min_hsv(0, 60, 90);
 const cv::Scalar yellow_tote_max_hsv(31, 255, 255);
 
-const cv::Scalar grey_tote_min_hsv(0, 42, 39);
-const cv::Scalar grey_tote_max_hsv(30, 255, 110);
+const cv::Scalar grey_tote_min_hsv(0, 19, 83);
+const cv::Scalar grey_tote_max_hsv(190, 90, 168);
 const cv::Scalar grey_tote_min_rgb(125, 142, 140);
 const cv::Scalar grey_tote_max_rgb(149, 155, 147);
 
-const cv::Scalar green_bin_min_hsv(0, 0, 12);
-const cv::Scalar green_bin_max_hsv(210, 109, 51);
+const cv::Scalar green_bin_min_hsv(0, 0, 0);
+const cv::Scalar green_bin_max_hsv(180, 80, 100);
 const cv::Scalar green_bin_min_rgb(38, 42, 0);
 const cv::Scalar green_bin_max_rgb(59, 63, 13);
 

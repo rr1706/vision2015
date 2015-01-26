@@ -1,3 +1,5 @@
 build*/
 *.o
 *.user*
+incoming/
+video/
