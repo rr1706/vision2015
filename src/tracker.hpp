@@ -61,7 +61,7 @@ public:
 
 class IRTracker {
 public:
-    std::vector<YellowTote> find_totes(cv::Mat img);
+    std::vector<YellowTote> find_totes(cv::Mat img, cv::Mat &draw);
 };
 
 #endif // TRACKER_HPP

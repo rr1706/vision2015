@@ -8,10 +8,9 @@
 using namespace cv;
 using namespace std;
 
-vector<YellowTote> IRTracker::find_totes(Mat img)
+vector<YellowTote> IRTracker::find_totes(Mat img, Mat& draw)
 {
     std::vector<SingleL> singles;
-    Mat draw;
 
     char str[50];
 

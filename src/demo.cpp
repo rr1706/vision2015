@@ -38,32 +38,31 @@ int imdir() {
 }
 
 int irtest() {
-    Mat img;
-    namedWindow("Drawing", CV_WINDOW_AUTOSIZE);
-    //namedWindow("Calibrated", CV_WINDOW_AUTOSIZE);
+    Mat img, draw;
+    namedWindow("Drawing", CV_WINDOW_NORMAL);
     DECLARE_TIMING(Timer);
     START_TIMING(Timer);
     double frame_time_ms;
     IRTracker tracker;
+    VideoWriter writer("ir.avi", CV_FOURCC('M', 'J', 'P', 'G'), 30, Size(640, 480), true);
     while (true) {
-        ///Acquire image
-//        img = kinectDepth(0);
-//        img = imread("../images/ir.png", CV_LOAD_IMAGE_GRAYSCALE);
         img = kinectIR(0);
         int key = waitKey(1) & 0xFF;
         if (key == 27)
             break;
-        //vector<Game_Piece> game_pieces = find_with_depth(img, key);
-        //vector<YellowTote> totes = find_yellow_color(img);
-        vector<YellowTote> totes_= tracker.find_totes(img);
+        if (key == ' ')
+            waitKey();
+        vector<YellowTote> totes_= tracker.find_totes(img, draw);
+        writer << draw;
         STOP_TIMING(Timer);
         frame_time_ms = GET_TIMING(Timer);
         if (frame_time_ms > 0) {
-            //printf("Current FPS = %.1f\n", 1000/frame_time_ms);
+            printf("Current FPS = %.1f\n", 1000/frame_time_ms);
         }
         START_TIMING(Timer);
 
     }
+    writer.release();
     cv::destroyAllWindows();
     return 0;
 }
@@ -136,6 +135,7 @@ int depthvideo() {
 
     }
     writer.release();
+    writerrgb.release();
     cv::destroyAllWindows();
     return 0;
 }
