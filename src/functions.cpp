@@ -378,7 +378,7 @@ double find_orientation(Mat img, Point2f left, Point2f closest, Point2f right)
 
 }
 
-Point get_min_x(Mat img, Rect boundrect)
+Point get_min_x(Mat img, Rect boundrect, Contour contour)
 {
     int x;
     int y = boundrect.y + boundrect.height / 2;
@@ -387,14 +387,14 @@ Point get_min_x(Mat img, Rect boundrect)
         if (x > 640)
             continue;
         sclr = img.at<uchar>(Point(x, y));
-        if (sclr[0] < 255) {
+        if (sclr[0] < 255 && cv::pointPolygonTest(contour, Point(x, y), false) >= 0) {
             break;
         }
     }
     return Point(x, y);
 }
 
-Point get_max_x(Mat img, Rect boundrect)
+Point get_max_x(Mat img, Rect boundrect, Contour contour)
 {
     int x;
     int y = boundrect.y + boundrect.height / 2;
@@ -403,14 +403,14 @@ Point get_max_x(Mat img, Rect boundrect)
         if (x < 0)
             continue;
         sclr = img.at<uchar>(Point(x, y));
-        if (sclr[0] < 255) {
+        if (sclr[0] < 255 && cv::pointPolygonTest(contour, Point(x, y), false) >= 0) {
             break;
         }
     }
     return Point(x, y);
 }
 
-Point get_min_y(Mat img, Rect boundrect)
+Point get_min_y(Mat img, Rect boundrect, Contour contour)
 {
     int x = boundrect.x + (boundrect.width / 2);
     int y;
@@ -419,14 +419,14 @@ Point get_min_y(Mat img, Rect boundrect)
         if (y > 480)
             continue;
         sclr = img.at<uchar>(Point(x, y));
-        if (sclr[0] < 255) {
+        if (sclr[0] < 255 && cv::pointPolygonTest(contour, Point(x, y), false) >= 0) {
             break;
         }
     }
     return Point(x, y);
 }
 
-Point get_max_y(Mat img, Rect boundrect)
+Point get_max_y(Mat img, Rect boundrect, Contour contour)
 {
     int x = boundrect.x + (boundrect.width / 2);
     int y;
@@ -435,7 +435,7 @@ Point get_max_y(Mat img, Rect boundrect)
         if (y < 0)
             continue;
         sclr = img.at<uchar>(Point(x, y));
-        if (sclr[0] < 255) {
+        if (sclr[0] < 255 && cv::pointPolygonTest(contour, Point(x, y), false) >= 0) {
             break;
         }
     }

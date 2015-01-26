@@ -70,10 +70,10 @@ std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, Mat rgb, Mat &output)
             Rect boundrect = boundingRect(contours[i]);
 
             Point closest = get_closest_point(img, contours[i]);
-            Point left = get_min_x(img, boundrect);
-            Point right = get_max_x(img, boundrect);
-            Point bottom = get_max_y(img, boundrect);
-            Point top = get_min_y(img, boundrect);
+            Point left = get_min_x(img, boundrect, contours[i]);
+            Point right = get_max_x(img, boundrect, contours[i]);
+            Point bottom = get_max_y(img, boundrect, contours[i]);
+            Point top = get_min_y(img, boundrect, contours[i]);
 
             circle(drawing, closest, 2, COLOR_BLUE, 1, 8, 0);
             circle(drawing, top, 2, COLOR_RED, 1, 8, 0);

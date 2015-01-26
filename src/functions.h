@@ -49,16 +49,16 @@ void Calculate_side(SingleL L, cv::Point2f center, cv::Mat img);
 double find_orientation(cv::Mat img, cv::Point2f left, cv::Point2f closest, cv::Point2f right);
 
 //Returns the furthest left point in a contour
-cv::Point get_min_x(cv::Mat img, cv::Rect boundrect);
+cv::Point get_min_x(cv::Mat img, cv::Rect boundrect, Contour contour);
 
 //Returns the furthest right point in a contour
-cv::Point get_max_x(cv::Mat img, cv::Rect boundrect);
+cv::Point get_max_x(cv::Mat img, cv::Rect boundrect, Contour contour);
 
 //Returns the highest pixel in a contour
-cv::Point get_min_y(cv::Mat img, cv::Rect boundrect);
+cv::Point get_min_y(cv::Mat img, cv::Rect boundrect, Contour contour);
 
 //Returns the lowest pixel in a contour
-cv::Point get_max_y(cv::Mat img, cv::Rect boundrect);
+cv::Point get_max_y(cv::Mat img, cv::Rect boundrect, Contour contour);
 
 //Returns the closest point in a contour
 cv::Point get_closest_point(cv::Mat img, std::vector<cv::Point> contour);
