@@ -200,11 +200,16 @@ void Calculate_side(SingleL L, Point2f center, Mat img)
 }
 
 void determine_stacked( vector<YellowTote> detected_totes, vector< vector<YellowTote> >& stacked_totes, vector<YellowTote>& unstacked_totes, Mat img)
-
 {
+    /*
+     * stacked totes description:
+     * first vector is a list of the tote stacks detected
+     * the second interior vector is all the totes in a single stack
+     */
     for (size_t tote_i = 0; tote_i < detected_totes.size(); tote_i++)
     {
         int level = 1;
+        vector<YellowTote> stack;
         for (size_t other_i =  tote_i + 1; other_i < detected_totes.size(); other_i++)
         {
             if (abs(detected_totes[tote_i].get_center_x() - detected_totes[other_i].get_center_x()) < 20)
@@ -212,16 +217,19 @@ void determine_stacked( vector<YellowTote> detected_totes, vector< vector<Yellow
                 if (detected_totes[tote_i].get_stacked() == -1)
                 {
                     detected_totes[tote_i].set_stacked(level);
-                    stacked_totes[tote_i][level] = detected_totes[tote_i];
-                    level++;
+                    stack.push_back(detected_totes[tote_i]);
+                    level += 1;
                 }
                 if (detected_totes[other_i].get_stacked() == -1)
                 {
                     detected_totes[other_i].set_stacked(level);
-                    stacked_totes[tote_i][level] = detected_totes[other_i];
+                    stack.push_back(detected_totes[other_i]);
                     level++;
                 }
             }
+        }
+        if (!stack.empty()) {
+            stacked_totes.push_back(stack);
         }
     }
     for (unsigned int i = 0; i < detected_totes.size(); i ++)
@@ -234,40 +242,15 @@ void determine_stacked( vector<YellowTote> detected_totes, vector< vector<Yellow
         }
     }
 
-
-
-    for(unsigned int i = 0; i < stacked_totes.size(); i++)
-    {
-        for(unsigned int j = 0; j < stacked_totes[i].size(); j++)
-        {
-            //figure out if the variable is junk
-            if(stacked_totes[i][j].get_center_x() == 0)
-            {
-                //it is junk, get rid of it in the vector
-                stacked_totes[i].erase(stacked_totes[i].begin()+j);
-            }
-        }
-    }
-
     //draw a line down the middle of the stack if one exists
     for(unsigned int i = 0; i < stacked_totes.size(); i++)
     {
         for(unsigned int j = 0; j < stacked_totes[i].size()-1; j++)
         {
-            //do not draw to the junk points
-            if (stacked_totes[i][j].get_stacked() == 0) {
-                continue;
-            }
-            if (stacked_totes[i][j + 1].get_stacked() == 0) {
-                continue;
-            }
-
             circle(img, stacked_totes[i][j].get_center(), 3, COLOR_BLUE);
             line(img, stacked_totes[i][j].get_center(), stacked_totes[i][j+1].get_center(), COLOR_BLUE, 2);
         }
     }
-
-    return;
 }
 
 //broken code

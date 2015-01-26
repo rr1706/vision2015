@@ -56,7 +56,7 @@ vector<YellowTote> IRTracker::find_totes(Mat img)
     std::vector<YellowTote> detected_totes = pairTotes(singles);
 
     //split the detected totes into ones that look stacked and ones that aren't
-    vector<vector<YellowTote> > stacked_totes(detected_totes.size() / 2, std::vector<YellowTote>(detected_totes.size()));
+    vector<vector<YellowTote> > stacked_totes;
     vector<YellowTote> unstacked_totes;
 
     //Determine if a tote is stacked or not
@@ -82,16 +82,6 @@ vector<YellowTote> IRTracker::find_totes(Mat img)
     {
         for(unsigned int j = 0; j < stacked_totes[i].size(); j++)
         {
-            //do not draw to the junk points
-            if (stacked_totes[i][j].get_stacked() == 0)
-            {
-                continue;
-            }
-            if (stacked_totes[i][j].get_stacked() == 0)
-            {
-                continue;
-            }
-
             Display_YellowTote(stacked_totes[i][j], draw, stacked_totes[i][j].get_center());
         }
     }
@@ -108,7 +98,5 @@ vector<YellowTote> IRTracker::find_totes(Mat img)
     //send stacked_totes[i][max] and all of unstacked_totes to RoboRio
 
     imshow("Drawing", draw);
-    imwrite("Final.jpeg", draw);
-
     return detected_totes;
 }
