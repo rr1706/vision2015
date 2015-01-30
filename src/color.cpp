@@ -11,7 +11,7 @@
 using namespace std;
 using namespace cv;
 
-vector<YellowTote> ColorTracker::find_totes(Mat img)
+vector<Game_Piece> ColorTracker::find_totes(Mat img)
 {
     Mat hsv, binary, draw;
     draw = img.clone();
@@ -35,8 +35,6 @@ vector<YellowTote> ColorTracker::find_totes(Mat img)
     vector<vector<Point> > box;
     findContours(binary, contour, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
 
-    vector<YellowTote> totes(contour.size());
-
     for (size_t i = 0; i < contour.size(); i++)
     {
         //If the contour is too small, throw it out
@@ -57,16 +55,16 @@ vector<YellowTote> ColorTracker::find_totes(Mat img)
         }
     }
 
-    printf("box size = %lu\n", box.size());
-    printf("logo size = %lu\n", logo.size());
+    printf("box size = %zu\n", box.size());
+    printf("logo size = %zu\n", logo.size());
 
-    Match_logo_totes(draw, box, logo, totes);
+    vector<Game_Piece> totes = Match_logo_totes(draw, box, logo);
 
 
     for(size_t i = 0; i < totes.size(); i ++)
     {
         totes[i].set_distance(calculate_distance(totes[i].get_center()));
-        Display_YellowTote(totes[i], draw, totes[i].get_center());
+        Display_Game_Piece(totes[i], draw, totes[i].get_center());
     }
 
     fflush(stdout);

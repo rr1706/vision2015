@@ -48,6 +48,7 @@ void UdpSender::send(Game_Piece piece)
             piece.get_piece_type(), // 0 - unknown, 1 - gray, 2 - yellow, 3 - green bin solo
             piece.get_totes_high()  // 0 - 6, totes in stack
             );
+    printf("[UDP] %s\n", buf);
 
     for (rp = this->result; rp != NULL; rp = rp->ai_next) {
         sock = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);

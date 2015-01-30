@@ -18,7 +18,7 @@ int imdir() {
     while (true) {
         printf("%d\n", i);
         Mat color = imread("../images/yellow box/im_" + std::to_string(i) + ".jpg");
-        std::vector<YellowTote> totes = tracker.find_totes(color);
+        std::vector<Game_Piece> totes = tracker.find_totes(color);
         imshow("Input", color);
         int raw = cv::waitKey(0) & 0xFFFF;
         printf("KEY: %X\n", raw);
@@ -173,6 +173,24 @@ int depthimdir() {
     return 0;
 }
 
+int color()
+{
+    ColorTracker tracker;
+    Mat img;
+    while (true) {
+        img = kinectRGB(0);
+        cvtColor(img, img, CV_RGB2BGR);
+        auto totes = tracker.find_totes(img);
+        send_udp(totes);
+        int key = waitKey(1) & 0xFF;
+        if (key == 27)
+            break;
+        if (key == ' ')
+            waitKey(0);
+
+    }
+}
+
 int basictimer()
 {
     pdebug("Starting in basic kinect color capture mode..\n");
@@ -254,5 +272,5 @@ void handle_signal(int signum)
 int main() {
     signal(SIGINT, handle_signal);
     signal(SIGTERM, handle_signal);
-    return depthvideo();
+    return color();
 }

@@ -530,21 +530,25 @@ Mat multiple_threshold(Mat img, Scalar hsv_min, Scalar hsv_max,
     return result;
 }
 
-void Match_logo_totes(Mat img, vector<vector<Point> > box, vector<vector<Point> > logo, vector<YellowTote>& tote)
+vector<Game_Piece> Match_logo_totes(Mat img, vector<vector<Point> > box, vector<vector<Point> > logo)
 {
+    vector<Game_Piece> totes;
     //loop through every box
     for(size_t i = 0; i < box.size(); i++)
     {
+        Game_Piece t;
+        t.set_piece_type(OBJECT_YELLOW_TOTE);
         Moments moment = moments(box[i], false);
         Point2f box_center = Point2f(moment.m10/moment.m00, moment.m01/moment.m00);
         circle(img, box_center, 3, COLOR_RED, 3);
+        t.set_center(box_center);
         //all we see is the long side of 1 or more yellow totes.
         if(logo.size() == 0)
         {
             //tote[i].set_center(box_center);
-            box_center = Point2f(box_center.x - (img.cols / 2.), -(box_center.y - (img.rows / 2.)));
-            tote[i].set_xrot((box_center.x / (img.cols / 2.)) * (fov.x / 2.));
-            tote[i].set_offset(90);
+            Point2f box_center_rb = Point2f(box_center.x - (img.cols / 2.), -(box_center.y - (img.rows / 2.)));
+            t.set_xrot((box_center_rb.x / (img.cols / 2.)) * (fov.x / 2.));
+            t.set_rotation(90);
         }
         //loop through every logo
         for(size_t j = 0; j < logo.size(); j++)
@@ -556,39 +560,41 @@ void Match_logo_totes(Mat img, vector<vector<Point> > box, vector<vector<Point> 
             //if the two centers are close, they are a match.
             if(distance(box_center, logo_center) < 35)
             {
-                tote[i].set_center(box_center);
+                t.set_center(box_center);
 
                 //Remap the center from the top left to the center of the screen
                 //for tote_center and logo_center
-                box_center = Point2f(box_center.x - (img.cols / 2.), -(box_center.y - (img.rows / 2.)));
+                Point2f box_center_rb = Point2f(box_center.x - (img.cols / 2.), -(box_center.y - (img.rows / 2.)));
                 logo_center = Point2f(logo_center.x - (img.cols / 2.), -(logo_center.y - (img.rows / 2.)));
 
                 //Calculate x rotation to tote_center and logo_center
-                tote[i].set_xrot((box_center.x / (img.cols / 2.)) * (fov.x / 2.));
-                tote[i].set_offset((box_center.x - logo_center.x) / (img.cols) * (fov.x));
+                t.set_xrot((box_center_rb.x / (img.cols / 2.)) * (fov.x / 2.));
+                t.set_rotation((box_center_rb.x - logo_center.x) / (img.cols) * (fov.x));
             }
             else //this box doesn't have a matching logo, we're looking at it's long side
             {
-                tote[i].set_center(box_center);
-                box_center = Point2f(box_center.x - (img.cols / 2.), -(box_center.y - (img.rows / 2.)));
-                tote[i].set_xrot((box_center.x / (img.cols / 2.)) * (fov.x / 2.));
-                tote[i].set_offset(90);
+//                tote[i].set_center(box_center);
+                Point2f box_center_rb = Point2f(box_center.x - (img.cols / 2.), -(box_center.y - (img.rows / 2.)));
+                t.set_xrot((box_center_rb.x / (img.cols / 2.)) * (fov.x / 2.));
+                t.set_rotation(90);
             }
         }
+        totes.push_back(t);
     }
     //Determine if yellow totes are stacked
-    for(size_t i = 0; tote.size(); i++)
+    for(size_t i = 0; i < totes.size(); i++)
     {
         int stack_height = 1;
-        for(size_t j = i+1; j < tote.size(); j++)
+        for(size_t j = i+1; j < totes.size(); j++)
         {
-            if(abs(tote[i].get_center_x() - tote[j].get_center_x()) < 10)
+            if(abs(totes[i].get_center().x - totes[j].get_center().x) < 10)
             {
                 stack_height++;
             }
         }
-        tote[i].set_stacked(stack_height);
+        totes[i].set_totes_high(stack_height);
     }
+    return totes;
 }
 
 void Laplacian( Mat& src, Mat& dst)
@@ -615,7 +621,7 @@ float calculate_distance(Point2f center)
 void send_udp(std::vector<Game_Piece> pieces)
 {
     static int iter = 0;
-    static UdpSender udp("10.17.6.2", "http");
+    static UdpSender udp("roboRIO-1706.local", "http");
     static SolutionLog lg("vision_output.csv", {"iter", "clock", "xrot", "distance", "rotation", "green", "type", "height"});
     auto closest = pieces.end();
     for (auto it = pieces.begin(); it < pieces.end(); ++it) {
@@ -624,12 +630,7 @@ void send_udp(std::vector<Game_Piece> pieces)
         }
     }
     if (closest != pieces.end()) {
-        try {
         udp.send(*closest);
-        } catch (...) {
-
-        }
-
         lg.log("iter", iter++);
         lg.log("clock", static_cast<double>(clock()) / CLOCKS_PER_SEC);
         lg.log("xrot", closest->get_xrot());
@@ -639,6 +640,9 @@ void send_udp(std::vector<Game_Piece> pieces)
         lg.log("type", closest->get_piece_type());
         lg.log("height", closest->get_totes_high());
         lg.flush();
+    } else {
+        Game_Piece fake;
+        udp.send(fake);
     }
 }
 

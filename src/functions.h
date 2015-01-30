@@ -80,7 +80,7 @@ cv::Mat multiple_threshold(cv::Mat img, cv::Scalar hsv_min, cv::Scalar hsv_max,
                            cv::Scalar rgb_min, cv::Scalar rgb_max);
 
 //Matches logos to boxes and stores them in totes.
-void Match_logo_totes(cv::Mat img, std::vector<std::vector<cv::Point> > box, std::vector<std::vector<cv::Point> > logo, std::vector<YellowTote>& tote);
+std::vector<Game_Piece> Match_logo_totes(cv::Mat img, std::vector<std::vector<cv::Point> > box, std::vector<std::vector<cv::Point> > logo);
 
 float calculate_distance(cv::Point2f center);
 

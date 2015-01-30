@@ -10,8 +10,8 @@ using namespace std;
 using namespace cv;
 
 //Class Game Piece functions
-Game_Piece::Game_Piece() : x_rot(99), distance(-1), rotation(-99),
-    totes_high(-1), piece_type(0), green_bin_top(false)
+Game_Piece::Game_Piece() : x_rot(0), distance(-1), rotation(0),
+    totes_high(-1), piece_type(0), green_bin_top(false), center(-1, -1)
 {
 }
 
@@ -44,6 +44,11 @@ void Game_Piece::set_piece_type(int type)
 void Game_Piece::set_green_bin(bool on_top)
 {
     green_bin_top = on_top;
+}
+
+void Game_Piece::set_center(Point2f center)
+{
+    this->center = center;
 }
 
 //Accessors
@@ -89,6 +94,11 @@ std::string Game_Piece::get_piece_type_str()
     default:
         return "Unknown";
     }
+}
+
+cv::Point2f Game_Piece::get_center()
+{
+    return this->center;
 }
 
 void Display_Game_Piece(Game_Piece object, Mat img, Point origin)

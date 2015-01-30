@@ -51,7 +51,7 @@ const int searchbuffer = 15;
 
 class ColorTracker {
 public:
-    std::vector<YellowTote> find_totes(cv::Mat img);
+    std::vector<Game_Piece> find_totes(cv::Mat img);
 };
 
 class DepthTracker {

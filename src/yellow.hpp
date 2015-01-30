@@ -22,6 +22,7 @@ private:
     //ints, -1 = default, 1 = gray tote, 2 = yellow tote, 3 = bin
     int piece_type;
     bool green_bin_top;
+    cv::Point2f center;
 
 public:
     Game_Piece(); // constructor
@@ -33,6 +34,7 @@ public:
     void set_totes_high(int stacks);
     void set_piece_type(int type);
     void set_green_bin(bool on_top);
+    void set_center(cv::Point2f center);
 
     //accessors
     float get_xrot();
@@ -42,6 +44,7 @@ public:
     int get_piece_type();
     std::string get_piece_type_str();
     bool get_green_bin();
+    cv::Point2f get_center();
 
     friend void Display_Game_Piece(const Game_Piece object, cv::Mat img, cv::Point origin);
 };
@@ -64,7 +67,8 @@ private:
 
 public:
     YellowTote();
-    YellowTote(Side side); //constructor
+    YellowTote(Side side);
+    //constructor
 
     //mutalators
     void set_side(Side s);
