@@ -94,5 +94,11 @@ void seperate_Contours(cv::Mat img, std::vector<cv::Point> contours, std::vector
 
 void send_udp(std::vector<Game_Piece> pieces);
 
+void profile_start(std::string id);
+
+void profile_end(std::string id);
+
+void profile_print();
+
 #endif // FUNCTIONS_H
 

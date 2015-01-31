@@ -3,6 +3,8 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <stdint.h>
 #include <ctime>
+#include <map>
+#include <chrono>
 #include "util.hpp"
 #include <free.hpp>
 #include "yellow.hpp"
@@ -646,3 +648,25 @@ void send_udp(std::vector<Game_Piece> pieces)
     }
 }
 
+static std::map<std::string, clock_t> profiles;
+
+void profile_start(string id)
+{
+    profiles[id] = clock();
+}
+
+void profile_end(string id)
+{
+    clock_t start = profiles[id];
+    profiles[id] = clock() - start;
+}
+
+void profile_print()
+{
+    for (auto it = profiles.begin(); it != profiles.end(); ++it) {
+        double duration = it->second;
+        duration = duration / CLOCKS_PER_SEC;
+        printf("Profile [%s]\t - %.2fs\n", it->first.c_str(), duration);
+    }
+    printf("--------------------------------------------------------------------------------\n");
+}
