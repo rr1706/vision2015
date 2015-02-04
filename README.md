@@ -9,11 +9,13 @@ The program was created by Team 1706, Ratchet Rocker Robotics. Connor is the lea
 
 Team members:
 * Connor Monahan
-* Hunter Park
 * Zachary Tibbetts
 * Brian Mongoven
 * Joey Flynn
 * Nikolos Antonio
+* Joe Yagelowich
+
+Mentors:
+* Hunter Park
 * Joe Flynn
 * JP Yagelowich
-* Joe Yagelowich
