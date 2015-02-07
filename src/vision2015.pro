@@ -19,7 +19,6 @@ HEADERS += \
     yellow.hpp \
     ../lib/free.hpp \
     udpsender.hpp \
-    timer.h \
     functions.h \
     tracker.hpp \
     solutionlog.hpp \

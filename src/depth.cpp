@@ -10,6 +10,7 @@ using namespace std;
 
 std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, Mat rgb, Mat &output)
 {
+    profile_start("filter");
     Mat dst, detected_edges, drawing;
 
     dst.create( img.size(), img.type() );
@@ -40,6 +41,8 @@ std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, Mat rgb, Mat &output)
     Game_Piece unknown_game_piece;
 
     findContours(dst, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE, Point(0, 0) );
+    profile_end("filter");
+
 
     Rect boundRect;
     vector<Contour> polygons(contours.size());
@@ -67,6 +70,7 @@ std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, Mat rgb, Mat &output)
             //vector<float> ave_distance = Average_Distance(depth, contours, boundRect);
 
             //calculate the center of the contour using nth order (1st order) moments
+            profile_start("get points");
             Point2f center = Calculate_Center(contours[i]);
 
             Rect boundrect = boundingRect(contours[i]);
@@ -76,20 +80,21 @@ std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, Mat rgb, Mat &output)
             Point right = get_max_x(img, boundrect, contours[i]);
             Point bottom = get_max_y(img, boundrect, contours[i]);
             Point top = get_min_y(img, boundrect, contours[i]);
+            profile_end("get points");
 
             circle(drawing, closest, 2, COLOR_BLUE, 1, 8, 0);
-            circle(drawing, top, 2, COLOR_RED, 1, 8, 0);
-            circle(drawing, bottom, 2, COLOR_RED, 1, 8, 0);
-            circle(drawing, right, 2, COLOR_RED, 1, 8, 0);
-            circle(drawing, left, 2, COLOR_RED, 1, 8, 0);
-
-
+            circle(drawing, top, 2, COLOR_RED, -1, 8, 0);
+            circle(drawing, bottom, 2, COLOR_GREEN, -1, 8, 0);
+            circle(drawing, right, 2, COLOR_RED, -1, 8, 0);
+            circle(drawing, left, 2, COLOR_RED, -1, 8, 0);
 
             //Find distance based off pixel intensity
             double distance = Calculate_Real_Distance(img, closest);
 
+            profile_start("game piece");
             //Check color to tell what game piece, if any, we are looking at.
             Determine_Game_Piece(rgb.clone(), center, unknown_game_piece, top, bottom);
+            profile_end("game piece");
 
             //draw what we know
             drawContours(drawing, contours,i, COLOR_RED, 1, 8, hierarchy, 0, Point() );
@@ -110,7 +115,7 @@ std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, Mat rgb, Mat &output)
 
             //Populate our class with values that we calculated
             unknown_game_piece.set_xrot(Calculate_Xrot(center));
-            unknown_game_piece.set_distance(stddev);
+            unknown_game_piece.set_distance(distance);
 
             game_piece.push_back(unknown_game_piece);
 
