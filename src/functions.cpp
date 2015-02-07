@@ -27,7 +27,7 @@ double distance1D(double one, double two)
     return abs(one - two);
 }
 
-double Calculate_Real_Distance(Mat img, Point2f center) {
+double Calculate_Real_Distance(Mat &img, Point2f center) {
     Scalar intensity = img.at<uchar>(center);
     return 0.1236 * tan(intensity[0]*4 / 2842.5 + 1.1863)*100;
 }
@@ -260,50 +260,79 @@ void determine_stacked( vector<YellowTote> detected_totes, vector< vector<Yellow
     }
 }
 
-//broken code
-//float Average_Distance(Mat image, vector<Point> contours)
-//{
-//    Mat labels = Mat::zeros(image.size(), CV_8UC1);
-//    vector<float> cont_avgs(contours.size(), 0.f);
-//    for(size_t i = 0; i < contours.size(); i++)
-//    {
-//        drawContours(labels, contours, i, Scalar(i), CV_FILLED);
-//        Scalar mean = cv::mean(image(roi), labels(roi) == i);
-//        cont_avgs[i] = mean[0];
-//    }
-//}
+const int movement = 10;
 
-double contour_average_distance(Mat image, Contour contour)
+inline Point moved_point(Point pt, Point center)
 {
-    double average = 0;
+    int offsetX, offsetY;
+    if (pt.x < center.x) {
+        offsetX = 1;
+    } else {
+        offsetX = -1;
+    }
+    if (pt.y < center.y) {
+        offsetY = 1;
+    } else {
+        offsetY = -1;
+    }
+    return Point2i(pt.x + (offsetX * movement), pt.y + (offsetY * movement));
+}
+
+double contour_average_distance(Mat& image, Contour& contour)
+{
+    Moments moment = moments(contour, false);
+    Point2f center = Point2f(moment.m10/moment.m00, moment.m01/moment.m00);
+    double average = 0, distance;
     for (Point pt : contour) {
-        average += Calculate_Real_Distance(image, pt);
+        distance = Calculate_Real_Distance(image, moved_point(pt, center));
+        average += distance;
     }
     return average / contour.size();
 }
 
-double contour_stddev(Mat image, Contour contour)
+double contour_stddev(Mat &image, Contour& contour)
 {
+    double dist, diff_mean;
     double ave_dist = contour_average_distance(image, contour);
     double variance = 0;
-    for (Point point : contour) {
-        double dist = Calculate_Real_Distance(image, point);
-        double diff_mean = ave_dist - dist;
+    Moments moment = moments(contour, false);
+    Point2f center = Point2f(moment.m10/moment.m00, moment.m01/moment.m00);
+    for (Point pt : contour) {
+        dist = Calculate_Real_Distance(image, moved_point(pt, center));
+        diff_mean = ave_dist - dist;
         variance += pow(diff_mean, 2);
     }
     variance = variance / contour.size();
     return sqrt(variance);
 }
 
-void seperate_Contours(Mat img, vector<Contour> contours)
+//calculate average distance of the pixels above the average distance
+//calclate the standard deviation.
+//save every point that is within two s.ds of this average to a vector point closer
+//calculate the average distance of the pixels below the average distance
+//calculate the standard deviation of this value
+//save every point that is within two s.ds of this average to a vector point back
+void separate_contours(Mat img, vector<Contour>& contours)
 {
-    //Average_Distance(img, contours);
-    //calculate average distance of the pixels above the average distance
-    //calclate the standard deviation.
-    //save every point that is within two s.ds of this average to a vector point closer
-    //calculate the average distance of the pixels below the average distance
-    //calculate the standard deviation of this value
-    //save every point that is within two s.ds of this average to a vector point back
+    double ave, stddev, dist;
+    vector<Contour> newContours;
+    for (Contour contour : contours) {
+        ave = contour_average_distance(img, contour);
+        stddev = contour_stddev(img, contour);
+        Moments moment = moments(contour, false);
+        Point2f center = Point2f(moment.m10/moment.m00, moment.m01/moment.m00);
+        Contour newContour;
+        for (Point pt : contour) {
+            dist = Calculate_Real_Distance(img, moved_point(pt, center));
+            if (abs(dist - ave) < stddev) {
+                newContour.push_back(pt);
+            }
+        }
+        if (!newContour.empty() && contourArea(newContour) > 2500 && contourArea(newContour) < 500000) {
+            newContours.push_back(newContour);
+        }
+    }
+    contours.swap(newContours);
 }
 
 //someone make a document with a step by step process of this math
@@ -463,15 +492,11 @@ Point get_closest_point(Mat img, vector<Point> contour)
 bool green_bin_top(Mat img, Point2f top)
 {
     return check_point(vec2scalar(img.at<Vec3b>(top)), green_bin_min_hsv, green_bin_max_hsv);
-    Mat thresh = multiple_threshold(img, green_bin_min_hsv, green_bin_max_hsv, green_bin_min_rgb, green_bin_max_rgb);
-    return thresh.at<uint8_t>(top) > 0;
 }
 
 bool tote_on_bottom(Mat img, Point2f bottom)
 {
     return check_point(vec2scalar(img.at<Vec3b>(bottom)), grey_tote_min_hsv, grey_tote_max_hsv);
-    Mat thresh = multiple_threshold(img, grey_tote_min_hsv, grey_tote_max_hsv, grey_tote_min_rgb, grey_tote_max_rgb);
-    return thresh.at<uint8_t>(bottom) > 0;
 }
 
 vector<YellowTote> pairTotes(vector<SingleL> singles)

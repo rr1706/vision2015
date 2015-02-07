@@ -12,7 +12,7 @@ typedef std::vector<cv::Point> Contour;
 double distance(cv::Point2f one, cv::Point2f two);
 
 //Returns the distance between the camera and Point center
-double Calculate_Real_Distance(cv::Mat img, cv::Point2f center);
+double Calculate_Real_Distance(cv::Mat& img, cv::Point2f center);
 
 //Determines the center of the contour passed to it
 cv::Point2f Calculate_Center(std::vector<cv::Point> contour);
@@ -89,20 +89,33 @@ std::vector<Game_Piece> Match_logo_totes(cv::Mat img, std::vector<std::vector<cv
 
 float calculate_distance(cv::Point2f center);
 
+// hunter code
 void Laplacian( cv::Mat& src, cv::Mat& dst);
 
-double contour_average_distance(cv::Mat image, Contour contour);
+// calculates the average distance to each point along the edge
+double contour_average_distance(cv::Mat &image, Contour &contour);
 
-double contour_stddev(cv::Mat image, Contour contour);
+// calculate the standard deviation of the points along the edge
+// of the contour using the distance to each point in the supplied
+// depth image
+double contour_stddev(cv::Mat& image, Contour &contour);
 
-void seperate_Contours(cv::Mat img, std::vector<cv::Point> contours, std::vector<cv::Point> close, std::vector<cv::Point> back);
+// use standard deviation to remove overlayed objects
+void separate_contours(cv::Mat img, std::vector<Contour>& contours);
 
+// send a command to the RoboRIO on UDP, using the largest found piece
+// throws exception if it cannot send the message (no network, can't resolve mDNS)
 void send_udp(std::vector<Game_Piece> pieces);
 
+// enable profiling for a specific identifier.
 void profile_start(std::string id);
 
+// ends profiling for a specific identifier and sets the value in the profiles
+// timing storage to be the difference between the current time and the start
+// time
 void profile_end(std::string id);
 
+// make a nicely printed output on stdout with all registered timings
 void profile_print();
 
 #endif // FUNCTIONS_H

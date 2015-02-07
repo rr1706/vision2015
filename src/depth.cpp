@@ -43,31 +43,18 @@ std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, Mat rgb, Mat &output)
     findContours(dst, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE, Point(0, 0) );
     profile_end("filter");
 
+    profile_start("sep. contours");
+    separate_contours(img, contours);
+    profile_end("sep. contours");
 
     Rect boundRect;
-    vector<Contour> polygons(contours.size());
 
     for( unsigned int i = 0; i < contours.size(); i++ )
     {
         if(contourArea(contours[i])>2500 && contourArea(contours[i]) < 500000)
         {
 
-            vector<Point> close, back;
-            double stddev = contour_stddev(img, contours[i]);
-            printf("STDDEV %f\n\n", stddev);
-//            seperate_Contours(img, contours[i], close, back);
-
             drawContours(drawing, contours, i, COLOR_RED, 1, 8);
-
-            approxPolyDP(contours[i], polygons[i], 15, true);
-            if (!isContourConvex(polygons[i])) {
-                continue;
-            }
-            drawContours(drawing, polygons, i, COLOR_GREEN, 3, 8);
-
-            //todo: differentiate between two objects that are overlapping
-            //Calculate average distance to a contour (by averaging the distance to every pixel in the contour
-            //vector<float> ave_distance = Average_Distance(depth, contours, boundRect);
 
             //calculate the center of the contour using nth order (1st order) moments
             profile_start("get points");
