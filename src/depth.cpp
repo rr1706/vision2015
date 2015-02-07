@@ -14,14 +14,16 @@ std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, Mat rgb, Mat &output)
 
     dst.create( img.size(), img.type() );
 
-    blur(rgb, rgb, Size(20,20), Point(-1,-1), BORDER_CONSTANT);
+//    blur(rgb, rgb, Size(20,20), Point(-1,-1), BORDER_CONSTANT);
 
     //Blur the image to smooth it
     //blur(img, img, Size(3,3), Point(-1,-1), BORDER_CONSTANT);
+//    erode(detected_edges, detected_edges, getStructuringElement(MORPH_CROSS, Size(3, 3)));
+//    dilate(detected_edges, detected_edges, getStructuringElement(MORPH_CROSS, Size(3, 3)));
 
     Laplacian(img, detected_edges);
 
-    imshow("detected edges", detected_edges);
+    DEBUG_SHOW("detected edges", detected_edges);
 
     ///Make sure these Mat's are empty
     dst = Scalar::all(0);
@@ -87,7 +89,7 @@ std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, Mat rgb, Mat &output)
             double distance = Calculate_Real_Distance(img, closest);
 
             //Check color to tell what game piece, if any, we are looking at.
-            Determine_Game_Piece(rgb, center, unknown_game_piece, top, bottom);
+            Determine_Game_Piece(rgb.clone(), center, unknown_game_piece, top, bottom);
 
             //draw what we know
             drawContours(drawing, contours,i, COLOR_RED, 1, 8, hierarchy, 0, Point() );

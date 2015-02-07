@@ -11,7 +11,8 @@ SOURCES += demo.cpp \
     color.cpp \
     depth.cpp \
     ir.cpp \
-    solutionlog.cpp
+    solutionlog.cpp \
+    ../lib/hsv.cpp
 
 HEADERS += \
     util.hpp \
@@ -21,7 +22,8 @@ HEADERS += \
     timer.h \
     functions.h \
     tracker.hpp \
-    solutionlog.hpp
+    solutionlog.hpp \
+    ../lib/hsv.hpp
 
 unix:LIBS += -lopencv_core -lopencv_imgproc -lopencv_highgui -lfreenect_sync
 INCLUDEPATH += ../lib

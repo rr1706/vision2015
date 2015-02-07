@@ -3,8 +3,7 @@ from the Microsoft Kinect v1 and return it as a cv::Mat*/
 
 #include <stdexcept>
 #ifdef __linux__
-#include "libfreenect.h"
-#include "libfreenect_sync.h"
+#include <libfreenect_sync.h>
 #endif
 #ifdef __APPLE__
 #include <libfreenect/libfreenect_sync.h>

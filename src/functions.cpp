@@ -5,8 +5,9 @@
 #include <ctime>
 #include <map>
 #include <chrono>
-#include "util.hpp"
 #include <free.hpp>
+#include <hsv.hpp>
+#include "util.hpp"
 #include "yellow.hpp"
 #include "functions.h"
 #include "tracker.hpp"
@@ -66,23 +67,19 @@ Vec3b scalar2vec(Scalar input)
 
 void Determine_Game_Piece(Mat img, Point2f, Game_Piece& unknown_game_piece, Point top, Point bottom)
 {
-    Point toteCheckpoint = bottom - Point(0, 40);
-    Point binCheckpoint = top + Point(0, 80);
-    Vec3b color = img.at<Vec3b>(toteCheckpoint);
-    Vec3b top_color = img.at<Vec3b>(binCheckpoint);
+    Point toteCheckpoint = bottom - Point(0, 20);
+    Point binCheckpoint = top + Point(0, 20);
 
-    print_color(img, vec2scalar(color), toteCheckpoint);
-    print_color(img, vec2scalar(top_color), binCheckpoint);
+    Scalar colour = vec2scalar(img.at<Vec3b>(toteCheckpoint));
+    Scalar rgb(colour[2], colour[1], colour[0]);
+    Scalar hsv = rgb2hsv(rgb);
+    pdebug("B: %f G: %f R: %f\nR: %f G: %f B: %f\nH: %f S: %f V: %f\n", colour[0], colour[1], colour[2], rgb[0], rgb[1], rgb[2], hsv[0], hsv[1], hsv[2]);
 
-    Mat yellowthresh = multiple_threshold(img, yellow_tote_min_hsv, yellow_tote_max_hsv, Scalar(0,0,0), Scalar(0,0,0));
-    Mat greenthresh = multiple_threshold(img, green_bin_min_hsv, green_bin_max_hsv, green_bin_min_rgb, green_bin_max_rgb);
-    Mat greythresh = multiple_threshold(img, grey_tote_min_hsv, grey_tote_max_hsv, grey_tote_min_rgb, grey_tote_max_rgb);
-
-    if (yellowthresh.at<uint8_t>(toteCheckpoint) > 0) {
+    if (check_point(vec2scalar(img.at<Vec3b>(toteCheckpoint)), yellow_tote_min_hsv, yellow_tote_max_hsv)) {
         unknown_game_piece.set_piece_type(OBJECT_YELLOW_TOTE);
-    } else if (greythresh.at<uint8_t>(toteCheckpoint) > 0) {
+    } else if (check_point(vec2scalar(img.at<Vec3b>(toteCheckpoint)), grey_tote_min_hsv, grey_tote_max_hsv)) {
         unknown_game_piece.set_piece_type(OBJECT_GREY_TOTE);
-    } else if (greenthresh.at<uint8_t>(toteCheckpoint) > 0) {
+    } else if (check_point(vec2scalar(img.at<Vec3b>(toteCheckpoint)), green_bin_min_hsv, green_bin_max_hsv)) {
         unknown_game_piece.set_piece_type(OBJECT_GREEN_BIN);
     } else {
         unknown_game_piece.set_piece_type(OBJECT_UNKNOWN);
@@ -96,8 +93,16 @@ void Determine_Game_Piece(Mat img, Point2f, Game_Piece& unknown_game_piece, Poin
     {
         unknown_game_piece.set_piece_type(OBJECT_GREY_TOTE);
     }
+
+    cvtColor(img, img, CV_BGR2HSV);
+    Vec3b color = img.at<Vec3b>(toteCheckpoint);
+    Vec3b top_color = img.at<Vec3b>(binCheckpoint);
+
+    print_color(img, vec2scalar(color), toteCheckpoint);
+    print_color(img, vec2scalar(top_color), binCheckpoint);
+    cvtColor(img, img, CV_HSV2BGR);
+
     imshow("RGB", img);
-    return;
 }
 
 int find_number_of_totes(Mat img, Game_Piece& tote, Point2f center, Point2f height)
@@ -457,12 +462,14 @@ Point get_closest_point(Mat img, vector<Point> contour)
 
 bool green_bin_top(Mat img, Point2f top)
 {
+    return check_point(vec2scalar(img.at<Vec3b>(top)), green_bin_min_hsv, green_bin_max_hsv);
     Mat thresh = multiple_threshold(img, green_bin_min_hsv, green_bin_max_hsv, green_bin_min_rgb, green_bin_max_rgb);
     return thresh.at<uint8_t>(top) > 0;
 }
 
 bool tote_on_bottom(Mat img, Point2f bottom)
 {
+    return check_point(vec2scalar(img.at<Vec3b>(bottom)), grey_tote_min_hsv, grey_tote_max_hsv);
     Mat thresh = multiple_threshold(img, grey_tote_min_hsv, grey_tote_max_hsv, grey_tote_min_rgb, grey_tote_max_rgb);
     return thresh.at<uint8_t>(bottom) > 0;
 }
@@ -514,7 +521,7 @@ void print_color(Mat &img, Scalar color, Point2i location)
     Vec3b saneColor = scalar2vec(color);
     // warn: if color is RGB then it is going to draw an inverted color rectangle :)
     rectangle(img, rekt, color, CV_FILLED);
-    rectangle(img, rekt, COLOR_WHITE, 1);
+    rectangle(img, rekt, COLOR_WHITE, 2);
     sprintf(colorStr, "(%03d,%03d,%03d)", saneColor[0], saneColor[1], saneColor[2]);
     putText(img, colorStr, location, CV_FONT_HERSHEY_PLAIN, 1, COLOR_WHITE);
     circle(img, location, 2, COLOR_BLACK, 1);
@@ -523,13 +530,29 @@ void print_color(Mat &img, Scalar color, Point2i location)
 Mat multiple_threshold(Mat img, Scalar hsv_min, Scalar hsv_max,
                        Scalar rgb_min, Scalar rgb_max)
 {
-    Mat hsv, rgb, result, result_hsv, result_rgb;
+    Mat hsv, rgb, resultTTT, result_hsv, result_rgb;
     cvtColor(img, hsv, CV_BGR2HSV);
     cvtColor(img, rgb, CV_BGR2RGB);
     inRange(hsv, hsv_min, hsv_max, result_hsv);
     inRange(rgb, rgb_min, rgb_max, result_rgb);
-    result = result_hsv | result_rgb;
-    return result;
+    bitwise_or(result_hsv, result_rgb, resultTTT);
+    return resultTTT;
+}
+
+bool check_point(Scalar color, Scalar hsv_min, Scalar hsv_max)
+{
+    auto rgb = Scalar(color[2], color[1], color[0]);
+    auto hsv = rgb2hsv(rgb);
+    return hsv[0] >= hsv_min[0] && hsv[0] <= hsv_max[0]
+            && hsv[1] >= hsv_min[1] && hsv[1] <= hsv_max[1]
+            && hsv[2] >= hsv_min[2] && hsv[2] <= hsv_max[2];
+    auto rgb_min = hsv2rgb(hsv_min);
+    auto rgb_max = hsv2rgb(hsv_max);
+    // the rgb_min/max are arranged r,g,b
+    // the color is arranged b,g,r
+    return color[0] > rgb_min[2] && color[0] < rgb_max[2]
+            && color[1] > rgb_min[1] && color[1] < rgb_max[1]
+            && color[2] > rgb_min[0] && color[2] < rgb_max[0];
 }
 
 vector<Game_Piece> Match_logo_totes(Mat img, vector<vector<Point> > box, vector<vector<Point> > logo)
@@ -666,7 +689,8 @@ void profile_print()
     for (auto it = profiles.begin(); it != profiles.end(); ++it) {
         double duration = it->second;
         duration = duration / CLOCKS_PER_SEC;
-        printf("Profile [%s]\t - %.2fs\n", it->first.c_str(), duration);
+        string blanks(20 - it->first.size(), ' ');
+        printf("Profile [%s]%s %.2fs\n", it->first.c_str(), blanks.c_str(), duration);
     }
     printf("--------------------------------------------------------------------------------\n");
 }
