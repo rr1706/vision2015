@@ -66,14 +66,14 @@ vector<YellowTote> IRTracker::find_totes(Mat img, Mat& draw)
     {
         for(unsigned int j = 0; j < stacked_totes[i].size(); j++)
         {
-            stacked_totes[i][j].set_xrot(Calculate_Xrot(stacked_totes[i][j].get_center()));
+            stacked_totes[i][j].set_xrot(Calculate_Xrot(img, stacked_totes[i][j].get_center()));
         }
     }
 
     //populate xrot for unstacked totes
     for(unsigned int i = 0; i < unstacked_totes.size(); i ++)
     {
-        unstacked_totes[i].set_xrot(Calculate_Xrot(unstacked_totes[i].get_center()));
+        unstacked_totes[i].set_xrot(Calculate_Xrot(img, unstacked_totes[i].get_center()));
     }
 
     //Display stacked_totes

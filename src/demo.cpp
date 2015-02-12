@@ -3,6 +3,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <free.hpp>
+#include <input.hpp>
 #include "yellow.hpp"
 #include "functions.h"
 #include "tracker.hpp"
@@ -64,17 +65,16 @@ int depthvideo() {
     pdebug("Starting depth video saver application..\n");
     Mat depth, rgb, drawing;
     namedWindow("Drawing", CV_WINDOW_NORMAL);
+    Input input;
     DepthTracker tracker;
     VideoWriter writer("depth.avi", CV_FOURCC('M', 'J', 'P', 'G'), 30, Size(640, 480), true);
     VideoWriter writerrgb("rgb.avi", CV_FOURCC('M', 'J', 'P', 'G'), 30, Size(640, 480), true);
     while (true) {
         profile_start("frame");
         profile_start("kinect");
-        depth = kinectDepth(0);
-        rgb = kinectRGB(0);
+        input.getBGR(rgb);
+        input.getDepth(depth);
         profile_end("kinect");
-        convertScaleAbs(depth, depth, 0.25, 0);
-        cvtColor(rgb, rgb, CV_RGB2BGR);
         int key = waitKey(1) & 0xFF;
         if (key == 27)
             break;
@@ -83,11 +83,6 @@ int depthvideo() {
         profile_start("track");
         vector<Game_Piece> game_pieces = tracker.find_pieces(depth, rgb, drawing);
         profile_end("track");
-        try {
-            send_udp(game_pieces);
-        } catch (std::runtime_error error) {
-            fprintf(stderr, "%s\n", error.what());
-        }
         profile_start("write");
         writerrgb << rgb;
         writer << drawing;

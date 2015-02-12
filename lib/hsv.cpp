@@ -1,4 +1,5 @@
 #include <hsv.hpp>
+#include <stdint.h>
 
 typedef struct RgbColor
 {
@@ -94,13 +95,19 @@ HsvColor RgbToHsv(RgbColor rgb)
 
 cv::Scalar rgb2hsv(cv::Scalar rgb)
 {
-    auto hsv = RgbToHsv({rgb[0], rgb[1], rgb[2]});
+    uint8_t r = rgb[0];
+    uint8_t g = rgb[1];
+    uint8_t b = rgb[2];
+    auto hsv = RgbToHsv({r, g, b});
     return cv::Scalar(hsv.h, hsv.s, hsv.v);
 }
 
 cv::Scalar hsv2rgb(cv::Scalar hsv)
 {
-    auto rgb = HsvToRgb({hsv[0], hsv[1], hsv[2]});
+    uint8_t h = hsv[0];
+    uint8_t s = hsv[1];
+    uint8_t v = hsv[2];
+    auto rgb = HsvToRgb({h, s, v});
     return cv::Scalar(rgb.r, rgb.g, rgb.b);
 }
 

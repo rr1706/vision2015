@@ -63,7 +63,7 @@ vector<Game_Piece> ColorTracker::find_totes(Mat img)
 
     for(size_t i = 0; i < totes.size(); i ++)
     {
-        totes[i].set_distance(calculate_distance(totes[i].get_center()));
+        totes[i].set_distance(calculate_distance(binary, totes[i].get_center()));
         Display_Game_Piece(totes[i], draw, totes[i].get_center());
     }
 

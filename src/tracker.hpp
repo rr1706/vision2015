@@ -5,9 +5,6 @@
 #include <vector>
 #include "yellow.hpp"
 
-#define Image_Width  640
-#define Image_Height 480
-
 //Tolerances are subject to change
 
 static cv::Mat kern = cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3), cv::Point(-1, -1));

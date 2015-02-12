@@ -101,7 +101,7 @@ std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, Mat rgb, Mat &output)
             }
 
             //Populate our class with values that we calculated
-            unknown_game_piece.set_xrot(Calculate_Xrot(center));
+            unknown_game_piece.set_xrot(Calculate_Xrot(img, center));
             unknown_game_piece.set_distance(distance);
 
             game_piece.push_back(unknown_game_piece);

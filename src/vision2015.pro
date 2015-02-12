@@ -12,7 +12,8 @@ SOURCES += demo.cpp \
     depth.cpp \
     ir.cpp \
     solutionlog.cpp \
-    ../lib/hsv.cpp
+    ../lib/hsv.cpp \
+    ../lib/input.cpp
 
 HEADERS += \
     util.hpp \
@@ -22,10 +23,11 @@ HEADERS += \
     functions.h \
     tracker.hpp \
     solutionlog.hpp \
-    ../lib/hsv.hpp
+    ../lib/hsv.hpp \
+    ../lib/input.hpp
 
-unix:LIBS += -lopencv_core -lopencv_imgproc -lopencv_highgui -lfreenect_sync
-INCLUDEPATH += ../lib
+unix:LIBS += -L/usr/local/lib -lopencv_core -lopencv_imgproc -lopencv_highgui -lfreenect_sync
+INCLUDEPATH += ../lib /usr/local/include
 QMAKE_CXXFLAGS += -std=c++11
 QMAKE_CXXFLAGS_DEBUG += -DDEBUG
 

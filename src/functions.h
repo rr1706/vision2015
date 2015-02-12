@@ -34,7 +34,7 @@ void Determine_Game_Piece(cv::Mat rgb, cv::Point2f center, Game_Piece& unknown_g
 
 //Calculates degrees between the point passed
 //and the center of the image
-double Calculate_Xrot(cv::Point2f center);
+double Calculate_Xrot(cv::Mat &img, cv::Point2f center);
 
 //Determines amount of totes stacked
 int find_number_of_totes(cv::Mat img, Game_Piece& tote, cv::Point2f center, cv::Point2f height);
@@ -87,7 +87,7 @@ bool check_point(cv::Scalar color, cv::Scalar hsv_min, cv::Scalar hsv_max);
 //Matches logos to boxes and stores them in totes.
 std::vector<Game_Piece> Match_logo_totes(cv::Mat img, std::vector<std::vector<cv::Point> > box, std::vector<std::vector<cv::Point> > logo);
 
-float calculate_distance(cv::Point2f center);
+float calculate_distance(cv::Mat& img, cv::Point2f center);
 
 // hunter code
 void Laplacian( cv::Mat& src, cv::Mat& dst);

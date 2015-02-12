@@ -68,7 +68,11 @@ Vec3b scalar2vec(Scalar input)
 void Determine_Game_Piece(Mat img, Point2f, Game_Piece& unknown_game_piece, Point top, Point bottom)
 {
     Point toteCheckpoint = bottom - Point(0, 20);
+    if (toteCheckpoint.y < 0)
+        toteCheckpoint.y = 0;
     Point binCheckpoint = top + Point(0, 20);
+    if (binCheckpoint.y >= img.rows)
+        binCheckpoint.y = img.rows - 1;
 
     Scalar colour = vec2scalar(img.at<Vec3b>(toteCheckpoint));
     Scalar rgb(colour[2], colour[1], colour[0]);
@@ -108,7 +112,7 @@ void Determine_Game_Piece(Mat img, Point2f, Game_Piece& unknown_game_piece, Poin
 int find_number_of_totes(Mat img, Game_Piece& tote, Point2f center, Point2f height)
 {
     double diff = abs(center.y - height.y);
-    double yrot = diff*fov.y/(Image_Height);
+    double yrot = diff*fov.y/(img.rows);
     yrot = cvt2rad(yrot);
     Scalar intensity = img.at<uchar>(height);
     float distance_to_top = 0.1236 * tan(intensity[0]*4 / 2842.5 + 1.1863)*100;
@@ -178,14 +182,14 @@ int find_number_of_totes(Mat img, Game_Piece& tote, Point2f center, Point2f heig
     return -1;
 }
 
-double Calculate_Xrot(Point2f center)
+double Calculate_Xrot(Mat& img, Point2f center)
 {
     //remap the center from top left to center of top
-    center.x = (center.x - Image_Width/2);
+    center.x = (center.x - img.cols/2);
 
     // Calculate angle to center of box
-    double Xrot = center.x/(Image_Width/2)*fov.x/2;
-    center.x = (center.x + Image_Width/2);
+    double Xrot = center.x/(img.cols/2)*fov.x/2;
+    center.x = (center.x + img.cols/2);
 
     return Xrot;
 }
@@ -343,7 +347,7 @@ double find_orientation(Mat img, Point2f left, Point2f closest, Point2f right)
 
     double d1 = Calculate_Real_Distance(img, closest);
     double d2 = Calculate_Real_Distance(img, right);
-    double theta = (right.x - closest.x) *fov.x / (Image_Width);
+    double theta = (right.x - closest.x) *fov.x / (img.cols);
     double c = sqrt(pow(d1, 2) + pow(d2, 2) - (2 * d1 * d2 * cos(cvt2rad(theta))));
     printf("c = %.2f\n", c);
 
@@ -358,7 +362,7 @@ double find_orientation(Mat img, Point2f left, Point2f closest, Point2f right)
         printf("d2 = %.2f\n", d_2);
         printf("d3 = %.2f\n", d_3);
 
-        double theta_2 = ((left.x - closest.x) * fov.x / (Image_Width));
+        double theta_2 = ((left.x - closest.x) * fov.x / (img.cols));
         printf("theta2 = %.2f\n", theta_2);
 
         double d_6 = cos(cvt2rad(theta_2))*d_2;
@@ -378,7 +382,7 @@ double find_orientation(Mat img, Point2f left, Point2f closest, Point2f right)
         printf("d2 = %.2f\n", d_2);
         printf("d3 = %.2f\n", d_3);
 
-        double theta_2 = ((right.x - closest.x) * fov.x / (Image_Width));
+        double theta_2 = ((right.x - closest.x) * fov.x / (img.cols));
         printf("theta2 = %.2f\n", theta_2);
 
         double d_6 = cos(cvt2rad(theta_2))*d_2;
@@ -403,7 +407,7 @@ Point get_min_x(Mat img, Rect boundrect, Contour contour)
     int y = boundrect.y + boundrect.height / 2;
     Scalar sclr;
     for (x = boundrect.x; x < boundrect.x + 40; x++) {
-        if (x > 640)
+        if (x > img.cols)
             continue;
         sclr = img.at<uchar>(Point(x, y));
         if (sclr[0] < 255 && cv::pointPolygonTest(contour, Point(x, y), false) >= 0) {
@@ -435,7 +439,7 @@ Point get_min_y(Mat img, Rect boundrect, Contour contour)
     int y;
     Scalar sclr;
     for (y = boundrect.y; y < boundrect.y + 40; y++) {
-        if (y > 480)
+        if (y > img.rows)
             continue;
         sclr = img.at<uchar>(Point(x, y));
         if (sclr[0] < 255 && cv::pointPolygonTest(contour, Point(x, y), false) >= 0) {
@@ -472,7 +476,7 @@ Point get_closest_point(Mat img, vector<Point> contour)
         int x = contour[i].x;
         int y;
         for (y = contour[i].y; y < contour[i].y + searchbuffer; y++) {
-            if (x < 0 || y < 0 || x > 640 || y > 480)
+            if (x < 0 || y < 0 || x > img.cols || y > img.rows)
                 continue;
             Scalar sclr = img.at<uchar>(Point(x, y));
             if (sclr[0] < 255) {
@@ -660,10 +664,10 @@ void Laplacian( Mat& src, Mat& dst)
     threshold(dst, dst, 5, 75, CV_THRESH_BINARY);
 }
 
-float calculate_distance(Point2f center)
+float calculate_distance(Mat& img, Point2f center)
 {
     float distance = -1;
-    float y_rot = center.y * fov.y / Image_Height;
+    float y_rot = center.y * fov.y / img.rows;
     distance = adjacent*tan(cvt2rad(y_rot));
     return distance;
 }
