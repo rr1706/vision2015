@@ -5,8 +5,8 @@
 #include <ctime>
 #include <map>
 #include <chrono>
-#include <free.hpp>
 #include <hsv.hpp>
+#include <input.hpp>
 #include "util.hpp"
 #include "yellow.hpp"
 #include "functions.h"
@@ -29,7 +29,11 @@ double distance1D(double one, double two)
 
 double Calculate_Real_Distance(Mat &img, Point2f center) {
     Scalar intensity = img.at<uchar>(center);
-    return 0.1236 * tan(intensity[0]*4 / 2842.5 + 1.1863)*100;
+    if (inputSource == KINECT) {
+        return 0.1236 * tan(intensity[0]*4 / 2842.5 + 1.1863)*100;
+    } else if (inputSource == XTION) {
+        return (1.6852 * intensity[0] + 50.521) * 2.54;
+    }
 }
 
 Point2f Calculate_Center(vector<Point> contour)
