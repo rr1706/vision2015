@@ -13,7 +13,8 @@ SOURCES += demo.cpp \
     ir.cpp \
     solutionlog.cpp \
     ../lib/hsv.cpp \
-    ../lib/input.cpp
+    ../lib/input.cpp \
+    robot.cpp
 
 HEADERS += \
     util.hpp \

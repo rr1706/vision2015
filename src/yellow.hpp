@@ -4,7 +4,10 @@
 #include <vector>
 #include <opencv2/core/core.hpp>
 
-const cv::Point2f fov(58, 45);
+const cv::Point2f FOV_kinect(57, 43);
+const cv::Point2f FOV_xtion(58, 45);
+
+cv::Point2f get_fov();
 
 enum Piece_Type {
     OBJECT_UNKNOWN = 0,

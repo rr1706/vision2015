@@ -118,5 +118,8 @@ void profile_end(std::string id);
 // make a nicely printed output on stdout with all registered timings
 void profile_print();
 
+void read_config();
+void write_config();
+
 #endif // FUNCTIONS_H
 

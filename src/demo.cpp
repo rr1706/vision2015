@@ -12,6 +12,8 @@
 using namespace cv;
 using namespace std;
 
+int robot();
+
 int imdir() {
     int i = 0;
     ColorTracker tracker;
@@ -219,5 +221,6 @@ void handle_signal(int signum)
 int main() {
     signal(SIGINT, handle_signal);
     signal(SIGTERM, handle_signal);
-    return depthvideo();
+    read_config();
+    return robot();
 }

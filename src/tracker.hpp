@@ -7,7 +7,7 @@
 
 //Tolerances are subject to change
 
-static cv::Mat kern = cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3), cv::Point(-1, -1));
+extern cv::Mat kern;
 
 const float camera_height = 50; //in
 const float camera_angle = 15; //degrees
@@ -18,18 +18,12 @@ const float adjacent = camera_height - tote_center_height; //in
 const int max_area = 1000000;
 const int min_area = 100;
 
-const cv::Scalar yellow_tote_min_hsv(  5, 158,  40);
-const cv::Scalar yellow_tote_max_hsv( 35, 255, 255);
-
-const cv::Scalar grey_tote_min_hsv( 92,  24,   0);
-const cv::Scalar grey_tote_max_hsv(200, 159,  92);
-const cv::Scalar grey_tote_min_rgb(  0,   0,   0);
-const cv::Scalar grey_tote_max_rgb(  0,   0,   0);
-
-const cv::Scalar green_bin_min_hsv(  0,   0,  39);
-const cv::Scalar green_bin_max_hsv(255, 205,  75);
-const cv::Scalar green_bin_min_rgb(  0,   0,   0);
-const cv::Scalar green_bin_max_rgb(  0,   0,   0);
+extern cv::Scalar yellow_tote_min_hsv;
+extern cv::Scalar yellow_tote_max_hsv;
+extern cv::Scalar grey_tote_min_hsv;
+extern cv::Scalar grey_tote_max_hsv;
+extern cv::Scalar green_bin_min_hsv;
+extern cv::Scalar green_bin_max_hsv;
 
 const int single_stack_height = 31.5;  //cm
 const int double_stack_height = 61;  //cm

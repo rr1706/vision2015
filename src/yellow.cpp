@@ -3,11 +3,22 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <cmath>
 #include <algorithm>
+#include <input.hpp>
 #include "yellow.hpp"
 #include "util.hpp"
 
 using namespace std;
 using namespace cv;
+
+Point2f get_fov()
+{
+    if (inputSource == KINECT) {
+        return FOV_kinect;
+    } else if (inputSource == XTION) {
+        return FOV_xtion;
+    }
+    throw std::runtime_error("get_fov: unknown inputSource");
+}
 
 //Class Game Piece functions
 Game_Piece::Game_Piece() : x_rot(0), distance(-1), rotation(0),

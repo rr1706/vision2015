@@ -34,6 +34,7 @@ double Calculate_Real_Distance(Mat &img, Point2f center) {
     } else if (inputSource == XTION) {
         return (1.6852 * intensity[0] + 50.521) * 2.54;
     }
+    throw std::runtime_error("Calculate_Real_Distance: unknown input source " + inputSource);
 }
 
 Point2f Calculate_Center(vector<Point> contour)
@@ -116,7 +117,7 @@ void Determine_Game_Piece(Mat img, Point2f, Game_Piece& unknown_game_piece, Poin
 int find_number_of_totes(Mat img, Game_Piece& tote, Point2f center, Point2f height)
 {
     double diff = abs(center.y - height.y);
-    double yrot = diff*fov.y/(img.rows);
+    double yrot = diff*get_fov().y/(img.rows);
     yrot = cvt2rad(yrot);
     Scalar intensity = img.at<uchar>(height);
     float distance_to_top = 0.1236 * tan(intensity[0]*4 / 2842.5 + 1.1863)*100;
@@ -192,7 +193,7 @@ double Calculate_Xrot(Mat& img, Point2f center)
     center.x = (center.x - img.cols/2);
 
     // Calculate angle to center of box
-    double Xrot = center.x/(img.cols/2)*fov.x/2;
+    double Xrot = center.x/(img.cols/2)*get_fov().x/2;
     center.x = (center.x + img.cols/2);
 
     return Xrot;
@@ -351,7 +352,7 @@ double find_orientation(Mat img, Point2f left, Point2f closest, Point2f right)
 
     double d1 = Calculate_Real_Distance(img, closest);
     double d2 = Calculate_Real_Distance(img, right);
-    double theta = (right.x - closest.x) *fov.x / (img.cols);
+    double theta = (right.x - closest.x) *get_fov().x / (img.cols);
     double c = sqrt(pow(d1, 2) + pow(d2, 2) - (2 * d1 * d2 * cos(cvt2rad(theta))));
     printf("c = %.2f\n", c);
 
@@ -366,7 +367,7 @@ double find_orientation(Mat img, Point2f left, Point2f closest, Point2f right)
         printf("d2 = %.2f\n", d_2);
         printf("d3 = %.2f\n", d_3);
 
-        double theta_2 = ((left.x - closest.x) * fov.x / (img.cols));
+        double theta_2 = ((left.x - closest.x) * get_fov().x / (img.cols));
         printf("theta2 = %.2f\n", theta_2);
 
         double d_6 = cos(cvt2rad(theta_2))*d_2;
@@ -386,7 +387,7 @@ double find_orientation(Mat img, Point2f left, Point2f closest, Point2f right)
         printf("d2 = %.2f\n", d_2);
         printf("d3 = %.2f\n", d_3);
 
-        double theta_2 = ((right.x - closest.x) * fov.x / (img.cols));
+        double theta_2 = ((right.x - closest.x) * get_fov().x / (img.cols));
         printf("theta2 = %.2f\n", theta_2);
 
         double d_6 = cos(cvt2rad(theta_2))*d_2;
@@ -605,7 +606,7 @@ vector<Game_Piece> Match_logo_totes(Mat img, vector<vector<Point> > box, vector<
         {
             //tote[i].set_center(box_center);
             Point2f box_center_rb = Point2f(box_center.x - (img.cols / 2.), -(box_center.y - (img.rows / 2.)));
-            t.set_xrot((box_center_rb.x / (img.cols / 2.)) * (fov.x / 2.));
+            t.set_xrot((box_center_rb.x / (img.cols / 2.)) * (get_fov().x / 2.));
             t.set_rotation(90);
         }
         //loop through every logo
@@ -626,14 +627,14 @@ vector<Game_Piece> Match_logo_totes(Mat img, vector<vector<Point> > box, vector<
                 logo_center = Point2f(logo_center.x - (img.cols / 2.), -(logo_center.y - (img.rows / 2.)));
 
                 //Calculate x rotation to tote_center and logo_center
-                t.set_xrot((box_center_rb.x / (img.cols / 2.)) * (fov.x / 2.));
-                t.set_rotation((box_center_rb.x - logo_center.x) / (img.cols) * (fov.x));
+                t.set_xrot((box_center_rb.x / (img.cols / 2.)) * (get_fov().x / 2.));
+                t.set_rotation((box_center_rb.x - logo_center.x) / (img.cols) * (get_fov().x));
             }
             else //this box doesn't have a matching logo, we're looking at it's long side
             {
 //                tote[i].set_center(box_center);
                 Point2f box_center_rb = Point2f(box_center.x - (img.cols / 2.), -(box_center.y - (img.rows / 2.)));
-                t.set_xrot((box_center_rb.x / (img.cols / 2.)) * (fov.x / 2.));
+                t.set_xrot((box_center_rb.x / (img.cols / 2.)) * (get_fov().x / 2.));
                 t.set_rotation(90);
             }
         }
@@ -671,7 +672,7 @@ void Laplacian( Mat& src, Mat& dst)
 float calculate_distance(Mat& img, Point2f center)
 {
     float distance = -1;
-    float y_rot = center.y * fov.y / img.rows;
+    float y_rot = center.y * get_fov().y / img.rows;
     distance = adjacent*tan(cvt2rad(y_rot));
     return distance;
 }
@@ -727,3 +728,42 @@ void profile_print()
     }
     printf("--------------------------------------------------------------------------------\n");
 }
+
+Mat kern = cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3), cv::Point(-1, -1));
+cv::Scalar yellow_tote_min_hsv(  5, 158,  40);
+cv::Scalar yellow_tote_max_hsv( 35, 255, 255);
+cv::Scalar grey_tote_min_hsv( 92,  24,   0);
+cv::Scalar grey_tote_max_hsv(200, 159,  92);
+cv::Scalar green_bin_min_hsv(  0,   0,  39);
+cv::Scalar green_bin_max_hsv(255, 205,  75);
+
+void read_config()
+{
+    cv::FileStorage config_in("config.yml", FileStorage::READ);
+    config_in["yellow_tote"]["min_hsv"] >> yellow_tote_min_hsv;
+    config_in["yellow_tote"]["max_hsv"] >> yellow_tote_max_hsv;
+    config_in["grey_tote"]["min_hsv"] >> grey_tote_min_hsv;
+    config_in["grey_tote"]["max_hsv"] >> grey_tote_max_hsv;
+    config_in["green_bin"]["min_hsv"] >> green_bin_min_hsv;
+    config_in["green_bin"]["max_hsv"] >> green_bin_max_hsv;
+    config_in.release();
+}
+
+void write_config()
+{
+    cv::FileStorage config_out("config.yml", FileStorage::WRITE);
+    config_out << "yellow_tote" << "{";
+    config_out << "min_hsv" << yellow_tote_min_hsv;
+    config_out << "max_hsv" << yellow_tote_max_hsv;
+    config_out << "}";
+    config_out << "grey_tote" << "{";
+    config_out << "min_hsv" << grey_tote_min_hsv;
+    config_out << "max_hsv" << grey_tote_max_hsv;
+    config_out << "}";
+    config_out << "green_bin" << "{";
+    config_out << "min_hsv" << green_bin_min_hsv;
+    config_out << "max_hsv" << green_bin_max_hsv;
+    config_out << "}";
+    config_out.release();
+}
+
