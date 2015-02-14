@@ -28,11 +28,11 @@ double distance1D(double one, double two)
 }
 
 double Calculate_Real_Distance(Mat &img, Point2f center) {
-    Scalar intensity = img.at<uchar>(center);
+    Scalar intensity = img.at<uchar>(center.y,center.x);
     if (inputSource == KINECT) {
         return 0.1236 * tan(intensity[0]*4 / 2842.5 + 1.1863)*100;
     } else if (inputSource == XTION) {
-        return (1.6852 * intensity[0] + 50.521) * 2.54;
+        return 1.6852 * intensity[0] + 50.521;
     }
     throw std::runtime_error("Calculate_Real_Distance: unknown input source " + inputSource);
 }
@@ -81,8 +81,8 @@ void Determine_Game_Piece(Mat img, Point2f, Game_Piece& unknown_game_piece, Poin
 
     Scalar colour = vec2scalar(img.at<Vec3b>(toteCheckpoint));
     Scalar rgb(colour[2], colour[1], colour[0]);
-    Scalar hsv = rgb2hsv(rgb);
-    pdebug("B: %f G: %f R: %f\nR: %f G: %f B: %f\nH: %f S: %f V: %f\n", colour[0], colour[1], colour[2], rgb[0], rgb[1], rgb[2], hsv[0], hsv[1], hsv[2]);
+//    Scalar hsv = rgb2hsv(rgb);
+//    pdebug("B: %f G: %f R: %f\nR: %f G: %f B: %f\nH: %f S: %f V: %f\n", colour[0], colour[1], colour[2], rgb[0], rgb[1], rgb[2], hsv[0], hsv[1], hsv[2]);
 
     if (check_point(vec2scalar(img.at<Vec3b>(toteCheckpoint)), yellow_tote_min_hsv, yellow_tote_max_hsv)) {
         unknown_game_piece.set_piece_type(OBJECT_YELLOW_TOTE);
@@ -116,12 +116,11 @@ void Determine_Game_Piece(Mat img, Point2f, Game_Piece& unknown_game_piece, Poin
 
 int find_number_of_totes(Mat img, Game_Piece& tote, Point2f center, Point2f height)
 {
-    double diff = abs(center.y - height.y);
+    double diff = abs(center.y - height.y+10);
     double yrot = diff*get_fov().y/(img.rows);
     yrot = cvt2rad(yrot);
-    Scalar intensity = img.at<uchar>(height);
-    float distance_to_top = 0.1236 * tan(intensity[0]*4 / 2842.5 + 1.1863)*100;
-    float real_height =  2*sin(yrot)*distance_to_top;
+    float distance_to_top = Calculate_Real_Distance(img, height);
+    float real_height =  2*sin(yrot)*distance_to_top + 5.;
     printf("real height = %.2fcm\n", real_height);
     //Check heights
     if(tote.get_green_bin() == false) //no green bin on top
@@ -297,6 +296,17 @@ double contour_average_distance(Mat& image, Contour& contour)
         average += distance;
     }
     return average / contour.size();
+//    float average, distance, samples;
+//    average = samples = 0;
+//    for (int x = 0; x < image.cols; x++) {
+//        for (int y = 0; y < image.rows; y++) {
+//            if (cv::pointPolygonTest(contour, Point(x, y), false) >= 0) {
+//                distance = Calculate_Real_Distance(image, Point2f(x, y));
+//                average += distance;
+//            }
+//        }
+//    }
+//    return average / samples;
 }
 
 double contour_stddev(Mat &image, Contour& contour)
@@ -333,7 +343,7 @@ void separate_contours(Mat img, vector<Contour>& contours)
         Contour newContour;
         for (Point pt : contour) {
             dist = Calculate_Real_Distance(img, moved_point(pt, center));
-            if (abs(dist - ave) < stddev) {
+            if (abs(dist - ave) < (stddev * 1)) {
                 newContour.push_back(pt);
             }
         }
@@ -348,62 +358,38 @@ void separate_contours(Mat img, vector<Contour>& contours)
 //and put it somewhere online so we can link to it in a comment.
 double find_orientation(Mat img, Point2f left, Point2f closest, Point2f right)
 {
-    double theta_6 = -99;
-
-    double d1 = Calculate_Real_Distance(img, closest);
-    double d2 = Calculate_Real_Distance(img, right);
-    double theta = (right.x - closest.x) *get_fov().x / (img.cols);
-    double c = sqrt(pow(d1, 2) + pow(d2, 2) - (2 * d1 * d2 * cos(cvt2rad(theta))));
-    printf("c = %.2f\n", c);
-
-    if (c < 10) {
-        theta_6 = 0;
-    } else if (c > 100) {
-        theta_6 = 90;
-    } else if (c > 40) {
-        double d_2 = Calculate_Real_Distance(img, closest);
-        double d_3 = Calculate_Real_Distance(img, left);
-
-        printf("d2 = %.2f\n", d_2);
-        printf("d3 = %.2f\n", d_3);
-
-        double theta_2 = ((left.x - closest.x) * get_fov().x / (img.cols));
-        printf("theta2 = %.2f\n", theta_2);
-
-        double d_6 = cos(cvt2rad(theta_2))*d_2;
-        printf("d6 = %.2f\n", d_6);
-
-        double d_7 = tan(cvt2rad(theta_2))*d_2;
-        printf("d7 = %.2f\n", d_7);
-
-        double d_8 = d_3 - d_6;
-        printf("d8 = %.2f\n", d_8);
-
-        theta_6 = cvt2degree(atan(d_8/d_7));
-    } else {
-        double d_2 = Calculate_Real_Distance(img, closest);
-        double d_3 = Calculate_Real_Distance(img, right);
-
-        printf("d2 = %.2f\n", d_2);
-        printf("d3 = %.2f\n", d_3);
-
-        double theta_2 = ((right.x - closest.x) * get_fov().x / (img.cols));
-        printf("theta2 = %.2f\n", theta_2);
-
-        double d_6 = cos(cvt2rad(theta_2))*d_2;
-        printf("d6 = %.2f\n", d_6);
-
-        double d_7 = tan(cvt2rad(theta_2))*d_2;
-        printf("d7 = %.2f\n", d_7);
-
-        double d_8 = d_3 - d_6;
-        printf("d8 = %.2f\n", d_8);
-
-        theta_6 = cvt2degree(atan(d_8/d_7));
+    Point2f L, R, C;
+    float distance_l = Calculate_Real_Distance(img, left);
+    float distance_r = Calculate_Real_Distance(img, right);
+    float distance_c = Calculate_Real_Distance(img, closest);
+    L.x = distance_l*sin((left.x-320)*cvt2rad(get_fov().x)/640);
+    R.x = distance_r*sin((right.x-320)*cvt2rad(get_fov().x)/640);
+    C.x = distance_c*sin((closest.x-320)*cvt2rad(get_fov().x)/640);
+    L.y = sqrt(pow(distance_l, 2) - pow(abs(L.x), 2));
+    R.y = sqrt(pow(distance_r, 2) - pow(abs(R.x), 2));
+    C.y = sqrt(pow(distance_c, 2) - pow(abs(C.x), 2));
+    float CL = distance(L, C);
+    float CR = distance(R, C);
+    float avg = (distance_l + distance_c + distance_r) / 3;
+    float variance = pow(distance_l - avg, 2) + pow(distance_r - avg, 2) + pow(distance_c - avg, 2);
+    float stddev = sqrt(variance);
+    printf("DL: %.2f DR: %.2f DC: %.2f CL: %.2f CR: %.2f\n", distance_l, distance_r, distance_c, CL, CR);
+    printf("L(%.2f,%.2f) C(%.2f,%.2f) R(%.2f,%.2f)\n",L.x,L.y,C.x,C.y,R.x,R.y);
+    printf("Stddev: %.2f", stddev);
+    if (stddev < 10)
+    {
+        return 0;
     }
-
-    return theta_6;
-
+    else if (CL > CR) {
+        // right side shorter
+        return cvt2degree(atan(abs((R.y - C.y) / (R.x - C.x))));
+    } else if (CR > CL) {
+        // left side shorter
+        return -cvt2degree(atan(abs((L.y - C.y) / (L.x - C.x))));
+    } else {
+        // smosmo
+        return 0;
+    }
 }
 
 Point get_min_x(Mat img, Rect boundrect, Contour contour)
@@ -474,25 +460,28 @@ Point get_closest_point(Mat img, vector<Point> contour)
 {
     Point closest_point = Point(-1,-1);
     double closest = 255;
+    Moments moment = moments(contour, false);
+    Point2f center = Point2f(moment.m10/moment.m00, moment.m01/moment.m00);
     for(unsigned int i = 0; i < contour.size(); i++)
     {
 
-        double intensity = 255;
-        int x = contour[i].x;
-        int y;
-        for (y = contour[i].y; y < contour[i].y + searchbuffer; y++) {
-            if (x < 0 || y < 0 || x > img.cols || y > img.rows)
-                continue;
-            Scalar sclr = img.at<uchar>(Point(x, y));
-            if (sclr[0] < 255) {
-                intensity = sclr[0];
-                break;
-            }
-        }
-        if(intensity < closest)
+//        int x = contour[i].x;
+//        int y;
+//        for (y = contour[i].y; y < contour[i].y + searchbuffer; y++) {
+//            if (x < 0 || y < 0 || x > img.cols || y > img.rows)
+//                continue;
+//            Scalar sclr = img.at<uchar>(Point(x, y));
+//            if (sclr[0] < 255) {
+//                intensity = sclr[0];
+//                break;
+//            }
+//        }
+        Point2f mv = moved_point(contour[i], center);
+        Scalar intensity = img.at<uchar>(mv);
+        if(intensity[0] < closest)
         {
-            closest = intensity;
-            closest_point = Point(x, y);
+            closest = intensity[0];
+            closest_point = mv;
         }
     }
     return closest_point;
@@ -665,8 +654,7 @@ void Laplacian( Mat& src, Mat& dst)
 
     Laplacian( src, dst, ddepth, kernel_size, scale, delta, BORDER_DEFAULT );
     convertScaleAbs( dst, dst );
-
-    threshold(dst, dst, 5, 75, CV_THRESH_BINARY);
+    threshold(dst, dst, 15, 75, CV_THRESH_BINARY);
 }
 
 float calculate_distance(Mat& img, Point2f center)
@@ -732,10 +720,10 @@ void profile_print()
 Mat kern = cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3), cv::Point(-1, -1));
 cv::Scalar yellow_tote_min_hsv(  5, 158,  40);
 cv::Scalar yellow_tote_max_hsv( 35, 255, 255);
-cv::Scalar grey_tote_min_hsv( 92,  24,   0);
-cv::Scalar grey_tote_max_hsv(200, 159,  92);
-cv::Scalar green_bin_min_hsv(  0,   0,  39);
-cv::Scalar green_bin_max_hsv(255, 205,  75);
+cv::Scalar grey_tote_min_hsv(  0,   0,  13);
+cv::Scalar grey_tote_max_hsv(102, 191,  90);
+cv::Scalar green_bin_min_hsv( 42,  25,  20);
+cv::Scalar green_bin_max_hsv(102, 204, 110);
 
 void read_config()
 {

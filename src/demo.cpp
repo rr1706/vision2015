@@ -2,7 +2,6 @@
 #include <signal.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <free.hpp>
 #include <input.hpp>
 #include "yellow.hpp"
 #include "functions.h"
@@ -12,19 +11,21 @@
 using namespace cv;
 using namespace std;
 
+bool endprogram = false;
+
 int robot();
 
 int imdir() {
-    int i = 0;
+    int i = 0, raw, key;
     ColorTracker tracker;
+    Mat color;
     while (true) {
         printf("%d\n", i);
-        Mat color = imread("../images/yellow box/im_" + std::to_string(i) + ".jpg");
-        std::vector<Game_Piece> totes = tracker.find_totes(color);
+        color = imread("../images/yellow box/im_" + std::to_string(i) + ".jpg");
+        tracker.find_totes(color);
         imshow("Input", color);
-        int raw = cv::waitKey(0) & 0xFFFF;
-        printf("KEY: %X\n", raw);
-        int key = raw & 0xFF;
+        raw = cv::waitKey(0) & 0xFFFF;
+        key = raw & 0xFF;
         if ((raw & 0xFF00) == 0xFF00) {
             if (key == 0x51) {
                 i--;
@@ -40,19 +41,20 @@ int imdir() {
 }
 
 int irtest() {
-    Mat img, draw;
+    Mat ir, draw;
     namedWindow("Drawing", CV_WINDOW_NORMAL);
     IRTracker tracker;
+    Input input;
     VideoWriter writer("ir.avi", CV_FOURCC('M', 'J', 'P', 'G'), 30, Size(640, 480), true);
     while (true) {
         profile_start("frame");
-        img = kinectIR(0);
+        input.getBGR(ir);
         int key = waitKey(1) & 0xFF;
         if (key == 27)
             break;
         if (key == ' ')
             waitKey();
-        tracker.find_totes(img, draw);
+        tracker.find_totes(ir, draw);
         writer << draw;
         profile_end("frame");
         profile_print();
@@ -67,11 +69,18 @@ int depthvideo() {
     pdebug("Starting depth video saver application..\n");
     Mat depth, rgb, drawing;
     namedWindow("Drawing", CV_WINDOW_NORMAL);
+    namedWindow("RGB", CV_WINDOW_NORMAL);
+    resizeWindow("Drawing", 640, 480);
+    resizeWindow("RGB", 640, 480);
+    moveWindow("Drawing", 640, 20);
+    moveWindow("RGB", 0, 20);
     Input input;
     DepthTracker tracker;
-    VideoWriter writer("depth.avi", CV_FOURCC('M', 'J', 'P', 'G'), 30, Size(640, 480), true);
-    VideoWriter writerrgb("rgb.avi", CV_FOURCC('M', 'J', 'P', 'G'), 30, Size(640, 480), true);
+//    VideoWriter writer("depth.avi", CV_FOURCC('M', 'J', 'P', 'G'), 30, Size(640, 480), true);
+//    VideoWriter writerrgb("rgb.avi", CV_FOURCC('M', 'J', 'P', 'G'), 30, Size(640, 480), true);
     while (true) {
+        if (endprogram)
+            break;
         profile_start("frame");
         profile_start("kinect");
         input.getBGR(rgb);
@@ -85,37 +94,40 @@ int depthvideo() {
         profile_start("track");
         vector<Game_Piece> game_pieces = tracker.find_pieces(depth, rgb, drawing);
         profile_end("track");
-        profile_start("write");
-        writerrgb << rgb;
-        writer << drawing;
-        profile_end("write");
+//        profile_start("write");
+//        writerrgb << rgb;
+//        writer << drawing;
+//        profile_end("write");
         profile_end("frame");
         profile_print();
         fflush(stdout);
     }
-    writer.release();
-    writerrgb.release();
+//    writer.release();
+//    writerrgb.release();
     cv::destroyAllWindows();
     return 0;
 }
 
 int depthimdir() {
-    int i = 0;
-    int key = 0;
-    namedWindow("Calibrated");
-    namedWindow("Drawing");
-    namedWindow("RGB");
-    moveWindow("RGB", 0, 20);
+    int i = 0, raw, key;
+    namedWindow("Drawing", CV_WINDOW_NORMAL);
+    namedWindow("RGB", CV_WINDOW_NORMAL);
+    resizeWindow("Drawing", 640, 480);
+    resizeWindow("RGB", 640, 480);
     moveWindow("Drawing", 640, 20);
+    moveWindow("RGB", 0, 20);
     DepthTracker tracker;
-    Mat drawing;
+    Mat drawing, depth, color;
     while (true) {
+        if (i < 0)
+            break;
         printf("<< ../images/green bin/*/img_%d.jpg\n", i);
-        Mat depth = imread("../images/green bin/depth/img_" + std::to_string(i) + ".jpg", CV_LOAD_IMAGE_GRAYSCALE);
-        Mat rgb = imread("../images/green bin/rgb/img_" + std::to_string(i) + ".jpg");
+        depth = imread("../images/green bin/depth/img_" + std::to_string(i) + ".jpg", CV_LOAD_IMAGE_GRAYSCALE);
+        color = imread("../images/green bin/rgb/img_" + std::to_string(i) + ".jpg");
+        imshow("RGB", color);
 
-        tracker.find_pieces(depth, rgb, drawing);
-        int raw = cv::waitKey(0) & 0xFFFF;
+        tracker.find_pieces(depth, color, drawing);
+        raw = cv::waitKey(0) & 0xFFFF;
         key = raw & 0xFF;
         if ((raw & 0xFF00) == 0xFF00) {
             if (key == 0x51) {
@@ -134,12 +146,12 @@ int depthimdir() {
 
 int color()
 {
+    Input input;
     ColorTracker tracker;
-    Mat img;
+    Mat color;
     while (true) {
-        img = kinectRGB(0);
-        cvtColor(img, img, CV_RGB2BGR);
-        auto totes = tracker.find_totes(img);
+        input.getBGR(color);
+        auto totes = tracker.find_totes(color);
         send_udp(totes);
         int key = waitKey(1) & 0xFF;
         if (key == 27)
@@ -153,11 +165,12 @@ int color()
 int basictimer()
 {
     pdebug("Starting in basic kinect color capture mode..\n");
-    Mat img;
+    Mat color;
+    Input input;
     while (true) {
         profile_start("frame");
-        img = kinectRGB(0);
-        imshow("Image", img);
+        input.getBGR(color);
+        imshow("Image", color);
         int key = waitKey(1);
         if ((key & 0xFF) == 27) {
             break;
@@ -170,9 +183,10 @@ int basictimer()
     return 0;
 }
 
-int record()
+int recordimdir()
 {
-    Mat depth, rgb;
+    Mat depth, color;
+    Input input;
     bool cameraMode = true;
     int i = 0;
     mkdir("../record", 0755);
@@ -180,17 +194,14 @@ int record()
     mkdir("../record/rgb", 0755);
     namedWindow("Depth");
     namedWindow("RGB");
-    namedWindow("IR");
     while (true) {
         puts("Frame");
-        depth = kinectDepth(0);
-        rgb = kinectRGB(0);
-        convertScaleAbs(depth, depth, 0.25, 0);
-        cvtColor(rgb, rgb, CV_RGB2BGR);
+        input.getDepth(depth);
+        input.getBGR(color);
         imshow("Depth", depth);
-        imshow("RGB", rgb);
+        imshow("RGB", color);
         imwrite("../record/depth/img_" + to_string(i) + ".jpg", depth);
-        imwrite("../record/rgb/img_" + to_string(i++) + ".jpg", rgb);
+        imwrite("../record/rgb/img_" + to_string(i++) + ".jpg", color);
         int key;
         if (cameraMode) {
             key = waitKey(0);
@@ -215,12 +226,13 @@ int record()
 void handle_signal(int signum)
 {
     if (signum == SIGINT || signum == SIGTERM)
-        exit(5);
+        endprogram = true;
+//        exit(5);
 }
 
 int main() {
     signal(SIGINT, handle_signal);
     signal(SIGTERM, handle_signal);
     read_config();
-    return robot();
+    return depthvideo();
 }

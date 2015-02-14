@@ -119,13 +119,13 @@ void Display_Game_Piece(Game_Piece object, Mat img, Point origin)
     sprintf(str, "Ratchet Rockers 1706");
     putText(img, str,Point(20, 20), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_BLUE,1,8,false);
 
-    sprintf(str, "XRot  = %.2f", object.get_xrot());
+    sprintf(str, "XRot  = %.2f deg", object.get_xrot());
     putText(img, str,Point(origin.x+15, origin.y+20), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_BLUE,1,8,false);
 
-    sprintf(str, "Distance = %.2f",object.get_distance());
+    sprintf(str, "Distance = %.2f cm",object.get_distance());
     putText(img, str,Point(origin.x+15, origin.y+40), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_BLUE,1,8,false);
 
-    sprintf(str, "Rotation = %.2f",object.get_rotation());
+    sprintf(str, "Orientation = %.2f deg",object.get_rotation());
     putText(img, str,Point(origin.x+15, origin.y+60), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_BLUE,1,8,false);
 
     sprintf(str, "Type = %s", object.get_piece_type_str().c_str());

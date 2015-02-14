@@ -40,7 +40,6 @@ void Input::getDepth(cv::Mat &out)
         cap.get()->retrieve(out, CV_CAP_OPENNI_DEPTH_MAP);
         out -= 512;
         out.convertTo(out, CV_8UC1, 0.0625);
-        printf("Xtion image res: x=%d, y=%d\n", out.cols, out.rows);
         out = out(cv::Rect(22, 12, 590, 450));
         for (int x = 0; x < out.cols; x++) {
             for (int y = 0; y < out.rows; y++) {
@@ -49,5 +48,6 @@ void Input::getDepth(cv::Mat &out)
                 }
             }
         }
+        cv::resize(out,out,cv::Size(640,480),640/590,480/450);
     }
 }
