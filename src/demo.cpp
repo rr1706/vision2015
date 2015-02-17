@@ -2,6 +2,8 @@
 #include <signal.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <stdio.h>
+#include <dirent.h>
 #include <input.hpp>
 #include "yellow.hpp"
 #include "functions.h"
@@ -121,28 +123,32 @@ int depthimdir() {
     moveWindow("RGB", 0, 20);
     DepthTracker tracker;
     Mat drawing, depth, color;
-    while (true) {
-        if (i < 0)
-            break;
-        printf("<< ../images/green bin/*/img_%d.jpg\n", i);
-        depth = imread("../images/green bin/depth/img_" + std::to_string(i) + ".jpg", CV_LOAD_IMAGE_GRAYSCALE);
-        color = imread("../images/green bin/rgb/img_" + std::to_string(i) + ".jpg");
+    string base_folder = "/home/odroid/room_calibrate";
+    DIR *dir;
+    struct dirent *dp;
+    dir = opendir((base_folder + "/color/").c_str());
+    while ((dp = readdir(dir)) != NULL) {
+        string fn = dp->d_name;
+        if (fn == "." || fn == "..")
+            continue;
+        printf("\n>>>>> %s\n", fn.c_str());
+        depth = imread(base_folder + "/depth/" + fn, CV_LOAD_IMAGE_GRAYSCALE);
+        color = imread(base_folder + "/color/" + fn);
         imshow("RGB", color);
 
         tracker.find_pieces(depth, color, drawing);
         raw = cv::waitKey(0) & 0xFFFF;
         key = raw & 0xFF;
         if ((raw & 0xFF00) == 0xFF00) {
-            if (key == 0x51) {
-                i--;
-            } else if (key == 0x53) {
-                i++;
+            if (key == 0x53) {
+                continue;
             }
         } else if (key == 27) {
             break;
         }
         fflush(stdout);
     }
+    closedir(dir);
     cv::destroyAllWindows();
     return 0;
 }
@@ -233,12 +239,15 @@ void handle_signal(int signum)
 //        exit(5);
 }
 
-int robot_main();
+int robot_main(int argc, char *argv[]);
 
-int main() {
-    return robot_main();
+int main(int argc, char *argv[]) {
+#ifdef DEBUG
     signal(SIGINT, handle_signal);
     signal(SIGTERM, handle_signal);
     read_config();
-    return depthvideo();
+    return depthimdir();
+#else
+    return robot_main(argc, argv);
+#endif
 }
