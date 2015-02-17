@@ -85,6 +85,8 @@ int depthvideo() {
         profile_start("kinect");
         input.getBGR(rgb);
         input.getDepth(depth);
+        cv::flip(rgb, rgb, -1);
+        cv::flip(depth, depth, -1);
         profile_end("kinect");
         int key = waitKey(1) & 0xFF;
         if (key == 27)
@@ -93,6 +95,7 @@ int depthvideo() {
             waitKey(0);
         profile_start("track");
         vector<Game_Piece> game_pieces = tracker.find_pieces(depth, rgb, drawing);
+        send_udp(game_pieces);
         profile_end("track");
 //        profile_start("write");
 //        writerrgb << rgb;
@@ -230,7 +233,10 @@ void handle_signal(int signum)
 //        exit(5);
 }
 
+int robot_main();
+
 int main() {
+    return robot_main();
     signal(SIGINT, handle_signal);
     signal(SIGTERM, handle_signal);
     read_config();
