@@ -72,17 +72,12 @@ Vec3b scalar2vec(Scalar input)
 
 void Determine_Game_Piece(Mat img, Point2f, Game_Piece& unknown_game_piece, Point top, Point bottom)
 {
-    Point toteCheckpoint = bottom - Point(0, 20);
+    Point2i toteCheckpoint = bottom - Point(0, 20);
     if (toteCheckpoint.y < 0)
         toteCheckpoint.y = 0;
-    Point binCheckpoint = top + Point(0, 20);
+    Point2i binCheckpoint = top + Point(0, 20);
     if (binCheckpoint.y >= img.rows)
         binCheckpoint.y = img.rows - 1;
-
-    Scalar colour = vec2scalar(img.at<Vec3b>(toteCheckpoint));
-    Scalar rgb(colour[2], colour[1], colour[0]);
-//    Scalar hsv = rgb2hsv(rgb);
-//    pdebug("B: %f G: %f R: %f\nR: %f G: %f B: %f\nH: %f S: %f V: %f\n", colour[0], colour[1], colour[2], rgb[0], rgb[1], rgb[2], hsv[0], hsv[1], hsv[2]);
 
     if (check_point(vec2scalar(img.at<Vec3b>(toteCheckpoint)), yellow_tote_min_hsv, yellow_tote_max_hsv)) {
         unknown_game_piece.set_piece_type(OBJECT_YELLOW_TOTE);
@@ -102,16 +97,15 @@ void Determine_Game_Piece(Mat img, Point2f, Game_Piece& unknown_game_piece, Poin
     {
         unknown_game_piece.set_piece_type(OBJECT_GREY_TOTE);
     }
+    if (SHOW_COLORS) {
+        cvtColor(img, img, CV_BGR2HSV);
+        Vec3b color = img.at<Vec3b>(toteCheckpoint);
+        Vec3b top_color = img.at<Vec3b>(binCheckpoint);
 
-    cvtColor(img, img, CV_BGR2HSV);
-    Vec3b color = img.at<Vec3b>(toteCheckpoint);
-    Vec3b top_color = img.at<Vec3b>(binCheckpoint);
-
-    print_color(img, vec2scalar(color), toteCheckpoint);
-    print_color(img, vec2scalar(top_color), binCheckpoint);
-    cvtColor(img, img, CV_HSV2BGR);
-
-    imshow("RGB", img);
+        print_color(img, vec2scalar(color), toteCheckpoint);
+        print_color(img, vec2scalar(top_color), binCheckpoint);
+        cvtColor(img, img, CV_HSV2BGR);
+    }
 }
 
 int find_number_of_totes(Mat img, Game_Piece& tote, Point2f center, Point2f height)
@@ -715,6 +709,7 @@ void profile_print()
         printf("Profile [%s]%s %.2fs\n", it->first.c_str(), blanks.c_str(), duration);
     }
     printf("--------------------------------------------------------------------------------\n");
+    profiles.clear();
 }
 
 Mat kern = cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3), cv::Point(-1, -1));
