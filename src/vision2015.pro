@@ -21,11 +21,11 @@ HEADERS += \
     yellow.hpp \
     ../lib/free.hpp \
     udpsender.hpp \
-    functions.h \
     tracker.hpp \
     solutionlog.hpp \
     ../lib/hsv.hpp \
-    ../lib/input.hpp
+    ../lib/input.hpp \
+    functions.hpp
 
 unix:LIBS += -L/usr/local/lib -lopencv_core -lopencv_imgproc -lopencv_highgui -lfreenect_sync
 INCLUDEPATH += ../lib /usr/local/include
