@@ -6,7 +6,7 @@
 #include <dirent.h>
 #include <input.hpp>
 #include "yellow.hpp"
-#include "functions.h"
+#include "functions.hpp"
 #include "tracker.hpp"
 #include "util.hpp"
 

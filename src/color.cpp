@@ -3,7 +3,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <cmath>
 #include <algorithm>
-#include "functions.h"
+#include "functions.hpp"
 #include "yellow.hpp"
 #include "util.hpp"
 #include "tracker.hpp"

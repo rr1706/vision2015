@@ -8,7 +8,7 @@
 #include <input.hpp>
 #include "tracker.hpp"
 #include "util.hpp"
-#include "functions.h"
+#include "functions.hpp"
 
 using namespace cv;
 using namespace std;

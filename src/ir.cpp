@@ -1,7 +1,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
-#include "functions.h"
+#include "functions.hpp"
 #include "util.hpp"
 #include "tracker.hpp"
 

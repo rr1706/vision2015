@@ -2,7 +2,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <thread>
-#include "functions.h"
+#include "functions.hpp"
 #include "util.hpp"
 #include "tracker.hpp"
 

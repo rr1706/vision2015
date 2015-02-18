@@ -9,7 +9,7 @@
 #include <input.hpp>
 #include "util.hpp"
 #include "yellow.hpp"
-#include "functions.h"
+#include "functions.hpp"
 #include "tracker.hpp"
 #include "udpsender.hpp"
 #include "solutionlog.hpp"
