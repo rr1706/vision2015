@@ -114,7 +114,7 @@ int depthvideo() {
 }
 
 int depthimdir() {
-    int i = 0, raw, key;
+    int raw, key;
     namedWindow("Drawing", CV_WINDOW_NORMAL);
     namedWindow("RGB", CV_WINDOW_NORMAL);
     resizeWindow("Drawing", 640, 480);
@@ -123,7 +123,7 @@ int depthimdir() {
     moveWindow("RGB", 0, 20);
     DepthTracker tracker;
     Mat drawing, depth, color;
-    string base_folder = "/home/odroid/room_calibrate";
+    string base_folder = "/home/connor/robotics/2015/matches/2015-02-19 20:00:22/";
     DIR *dir;
     struct dirent *dp;
     dir = opendir((base_folder + "/color/").c_str());
@@ -134,6 +134,8 @@ int depthimdir() {
         printf("\n>>>>> %s\n", fn.c_str());
         depth = imread(base_folder + "/depth/" + fn, CV_LOAD_IMAGE_GRAYSCALE);
         color = imread(base_folder + "/color/" + fn);
+        if (color.rows < 1 || depth.rows < 1)
+            continue;
         imshow("RGB", color);
 
         tracker.find_pieces(depth, color, drawing);
@@ -241,13 +243,14 @@ void handle_signal(int signum)
 
 int robot_main(int argc, char *argv[]);
 
-int main(int argc, char *argv[]) {
 #ifdef DEBUG
+int main() {
     signal(SIGINT, handle_signal);
     signal(SIGTERM, handle_signal);
     read_config();
     return depthimdir();
 #else
+int main(int argc, char *argv[]) {
     return robot_main(argc, argv);
 #endif
 }

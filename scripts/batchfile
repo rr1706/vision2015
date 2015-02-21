@@ -1,0 +1,4 @@
+cd matches-2015
+lcd ../matches
+ls
+get -r 2015*
