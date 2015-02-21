@@ -102,6 +102,8 @@ std::string Game_Piece::get_piece_type_str()
         return "Yellow Tote";
     case OBJECT_GREEN_BIN:
         return "Green Bin";
+    case OBJECT_BUMP:
+        return "Bump";
     default:
         return "Unknown";
     }

@@ -61,6 +61,9 @@ static void process_contour(ContourData *dat)
     //Check color to tell what game piece, if any, we are looking at.
     unknown_game_piece.set_piece_type(OBJECT_UNKNOWN);
 //    Determine_Game_Piece(rgb, center, unknown_game_piece, top, bottom);
+    float ratio = static_cast<float>(boundrect.width) / boundrect.height;
+    if (ratio > 8)
+        unknown_game_piece.set_piece_type(OBJECT_BUMP);
     profile_end("game piece");
 
     //check to see if the game piece is a tote

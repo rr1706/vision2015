@@ -13,7 +13,8 @@ enum Piece_Type {
     OBJECT_UNKNOWN = 0,
     OBJECT_GREY_TOTE = 1,
     OBJECT_YELLOW_TOTE = 2,
-    OBJECT_GREEN_BIN = 3
+    OBJECT_GREEN_BIN = 3,
+    OBJECT_BUMP
 };
 
 class Game_Piece {

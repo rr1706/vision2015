@@ -666,6 +666,8 @@ void send_udp(std::vector<Game_Piece> pieces)
     static SolutionLog lg("vision_output.csv", {"iter", "clock", "xrot", "distance", "rotation", "green", "type", "height"});
     auto closest = pieces.end();
     for (auto it = pieces.begin(); it < pieces.end(); ++it) {
+        if (it->get_piece_type() == OBJECT_BUMP)
+            continue;
         if (closest == pieces.end() || it->get_distance() < closest->get_distance()) {
             closest = it;
         }
