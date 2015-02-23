@@ -15,6 +15,7 @@ vector<Game_Piece> ColorTracker::find_totes(Mat img)
 {
     Mat hsv, binary, draw;
     draw = img.clone();
+    profile_start("filter");
 
     //todo: do connor's multithresh process here, doesn't have to be before the code release.
 
@@ -34,6 +35,7 @@ vector<Game_Piece> ColorTracker::find_totes(Mat img)
     vector<vector<Point> > logo;
     vector<vector<Point> > box;
     findContours(binary, contour, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
+    profile_end("filter");
 
     for (size_t i = 0; i < contour.size(); i++)
     {
@@ -55,19 +57,18 @@ vector<Game_Piece> ColorTracker::find_totes(Mat img)
         }
     }
 
-    printf("box size = %zu\n", box.size());
-    printf("logo size = %zu\n", logo.size());
-
+    profile_start("match");
     vector<Game_Piece> totes = Match_logo_totes(draw, box, logo);
+    profile_end("match");
 
-
+    drawContours(draw, box, -1, COLOR_RED, 1, 8);
     for(size_t i = 0; i < totes.size(); i ++)
     {
         totes[i].set_distance(calculate_distance(binary, totes[i].get_center()));
         Display_Game_Piece(totes[i], draw, totes[i].get_center());
     }
 
-    fflush(stdout);
-    DEBUG_SHOW("Processed", draw);
+    if (SHOW_IMAGES)
+        imshow("Drawing", draw);
     return totes;
 }

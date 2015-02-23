@@ -70,16 +70,20 @@ static void process_contour(ContourData *dat)
 //        if(unknown_game_piece.get_piece_type() == 1 || unknown_game_piece.get_piece_type() == 2)
     {
         //Determine stack height
+        profile_start("height");
         totes = find_number_of_totes(img, unknown_game_piece, center, top);
 
         unknown_game_piece.set_totes_high(totes);
+        profile_end("height");
 
+        profile_start("orientation");
         orientation = find_orientation(img, left, closest, right);
         if (abs(orientation) > 60) {
-            orientation = NAN;
+            orientation = 0;
         }
         //Determine offset
         unknown_game_piece.set_rotation(orientation);
+        profile_end("orientation");
     }
 
     //Populate our class with values that we calculated
@@ -109,7 +113,7 @@ std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, Mat rgb, Mat &output)
 
     cvtColor(img, drawing, CV_GRAY2RGB);
 
-    vector<Contour> contours, polygons;
+    vector<Contour> contours;
     vector<Vec4i> hierarchy;
 
     findContours(detected_edges, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_NONE, Point(0, 0) );
@@ -125,6 +129,7 @@ std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, Mat rgb, Mat &output)
         cvtColor(originalContours, originalContours, CV_HSV2BGR);
         imshow("Original Contours", originalContours);
     }
+    profile_start("sep. contours");
     { // interior contours finding block
         vector<Contour> modCtrs;
         for (size_t i = 0, x = 0; i < contours.size(); i++, x += 20) {
@@ -135,7 +140,6 @@ std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, Mat rgb, Mat &output)
         // put outputs back in real contour storage
         modCtrs.swap(contours);
     }
-    profile_start("sep. contours");
     // updates the contours storage with the results from the stddev-based separator
     separate_contours(img, contours);
     profile_end("sep. contours");
@@ -147,16 +151,14 @@ std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, Mat rgb, Mat &output)
         cvtColor(separatedContours, separatedContours, CV_HSV2BGR);
         imshow("Separated Contours", separatedContours);
     }
-    polygons.reserve(contours.size());
-    if (SHOW_IMAGES) {
-        drawContours(drawing, contours, -1, COLOR_RED, 1, 8);
-    }
+    vector<Contour> polygons(contours.size());
     profile_start("contours");
     map<thread*, ContourData*> threads;
     for (size_t i = 0; i < contours.size(); i++) {
         if (contourArea(contours[i]) < 2500 || contourArea(contours[i]) > 500000) {
             continue;
         }
+        approxPolyDP(contours[i], polygons[i], 15, true);
         ContourData *dat = new ContourData;
         dat->contour = contours[i];
         dat->depth = img;
@@ -165,6 +167,10 @@ std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, Mat rgb, Mat &output)
         dat->rgb = rgb;
         thread *t = new thread(process_contour, dat);
         threads[t] = dat;
+    }
+    if (SHOW_IMAGES) {
+        drawContours(drawing, contours, -1, COLOR_RED, 1, 8);
+        drawContours(drawing, polygons, -1, COLOR_WHITE, 1, 8);
     }
     for (auto it = threads.begin(); it != threads.end(); ++it) {
         it->first->join();

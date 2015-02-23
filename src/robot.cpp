@@ -25,11 +25,15 @@ enum RobotError {
 
 int frame_status, signal_status, frame_id, iter;
 clock_t last_write;
+double fps_avg, last_frame;
 
 int robot_frame(Input& input)
 {
     static DepthTracker tracker;
     Mat rgb, depth, drawing;
+    vector<Game_Piece> game_pieces;
+    clock_t frame_start, frame_end;
+    frame_start = clock();
     profile_start("frame");
     profile_start("kinect");
     try {
@@ -57,7 +61,6 @@ int robot_frame(Input& input)
     }
     profile_end("writer");
     profile_start("track");
-    vector<Game_Piece> game_pieces;
     try {
         game_pieces = tracker.find_pieces(depth, rgb, drawing);
     } catch (cv::Exception& ex) {
@@ -73,13 +76,36 @@ int robot_frame(Input& input)
     profile_end("track");
     profile_end("frame");
     profile_print();
+    frame_end = clock();
+    last_frame = static_cast<double>(frame_end - frame_start) / CLOCKS_PER_SEC;
+    fps_avg = fps_avg * 0.9 + last_frame * 0.1;
+    printf("FPS: %.2f\n", 1 / fps_avg);
     iter ++;
     return RE_SUCCESS;
+}
+
+// prevent accidental death of the driver during practice
+// sends zero values to the driver station on UDP when we quit
+void death()
+{
+    vector<Game_Piece> piece;
+    try {
+        send_udp(piece);
+    } catch (...) {
+    }
 }
 
 int robot_loop()
 {
     Input input;
+    if (SHOW_IMAGES) {
+        namedWindow("Drawing", CV_WINDOW_NORMAL);
+        namedWindow("RGB", CV_WINDOW_NORMAL);
+        resizeWindow("Drawing", 640, 480);
+        resizeWindow("RGB", 640, 480);
+        moveWindow("Drawing", 640, 20);
+        moveWindow("RGB", 0, 20);
+    }
     // processes images until told to stop
     while (!frame_status && !signal_status) {
         frame_status = robot_frame(input);
@@ -90,6 +116,7 @@ int robot_loop()
     }
     // camera is closed here
     input.cap->release();
+    death();
     return frame_status | signal_status;
 }
 void robot_signal(int signum)
@@ -98,6 +125,7 @@ void robot_signal(int signum)
     if (signum == SIGINT || signum == SIGTERM) {
         signal_status = 1;
     } else {
+        death();
         exit(RE_LINUX);
     }
 }
@@ -112,8 +140,10 @@ int robot_main(int argc, char *argv[])
     signal(SIGABRT, robot_signal);
     signal(SIGSEGV, robot_signal);
     fclose(stdin);
-    freopen("robot.log", "a", stdout);
-    freopen("robot.err", "a", stderr);
+    if (!freopen("robot.log", "a", stdout))
+        throw std::runtime_error("Failed to log output stream");
+    if (!freopen("robot.err", "a", stderr))
+        throw std::runtime_error("Failed to log error stream");
     mkdir("depth", 0775);
     mkdir("color", 0775);
     read_config();

@@ -690,16 +690,21 @@ void send_udp(std::vector<Game_Piece> pieces)
 }
 
 static std::map<std::string, clock_t> profiles;
+static int level = 0;
 
 void profile_start(string id)
 {
-    profiles[id] = clock();
+    string store(level, '>');
+    profiles[store + id] = clock();
+    level ++;
 }
 
 void profile_end(string id)
 {
-    clock_t start = profiles[id];
-    profiles[id] = clock() - start;
+    level --;
+    string store(level, '>');
+    clock_t start = profiles[store + id];
+    profiles[store + id] = clock() - start;
 }
 
 void profile_print()
