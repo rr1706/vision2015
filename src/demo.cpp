@@ -173,6 +173,17 @@ int color()
     return 0;
 }
 
+int color_oneimage()
+{
+    ColorTracker tracker;
+    Mat image;
+
+    image = cv::imread("/home/connor/robotics/2015/images/multi tote color.jpg");
+    tracker.find_totes(image);
+    cv::waitKey(0);
+    return 0;
+}
+
 int basictimer()
 {
     pdebug("Starting in basic kinect color capture mode..\n");
@@ -248,7 +259,7 @@ int main() {
     signal(SIGINT, handle_signal);
     signal(SIGTERM, handle_signal);
     read_config();
-    return depthimdir();
+    return color_oneimage();
 #else
 int main(int argc, char *argv[]) {
     return robot_main(argc, argv);

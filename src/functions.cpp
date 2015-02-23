@@ -575,6 +575,7 @@ bool check_point(Scalar color, Scalar hsv_min, Scalar hsv_max)
 vector<Game_Piece> Match_logo_totes(Mat img, vector<vector<Point> > box, vector<vector<Point> > logo)
 {
     vector<Game_Piece> totes;
+    vector<Contour> second_round_boxes;
     //loop through every box
     for(size_t i = 0; i < box.size(); i++)
     {
@@ -583,6 +584,7 @@ vector<Game_Piece> Match_logo_totes(Mat img, vector<vector<Point> > box, vector<
         Moments moment = moments(box[i], false);
         Point2f box_center = Point2f(moment.m10/moment.m00, moment.m01/moment.m00);
         circle(img, box_center, 3, COLOR_RED, 3);
+        Rect rekt = boundingRect(box[i]);
         t.set_center(box_center);
         //all we see is the long side of 1 or more yellow totes.
         if(logo.size() == 0)
@@ -613,6 +615,36 @@ vector<Game_Piece> Match_logo_totes(Mat img, vector<vector<Point> > box, vector<
                 t.set_xrot((box_center_rb.x / (img.cols / 2.)) * (get_fov().x / 2.));
                 t.set_rotation((box_center_rb.x - logo_center.x) / (img.cols) * (get_fov().x));
             }
+            // the center is close on the Y, so it may be combined with another tote
+            else if (abs(box_center.y - logo_center.y) < 20)
+            {
+                float dl = rekt.x + rekt.width - logo_center.x;
+                float dr = logo_center.x - rekt.x;
+                float avg = (dl + dr) / 2;
+                float stdev = sqrt(pow(dl - avg, 2) + pow(dr - avg, 2));
+                printf("dl %f dr %f stdev %f\n", dl, dr, stdev);
+                if (dl > stdev) {
+                    // distance to left is greater than expected, cut the area away from the box
+                    float result_x = rekt.x + (rekt.width / 2.) - dr;
+                    Contour newCtr;
+                    for (size_t k = 0; k < box[i].size(); k++) {
+                        if (box[i][k].x < result_x)
+                            newCtr.push_back(box[i][k]);
+                    }
+                    second_round_boxes.push_back(newCtr);
+                } else if (dr > stdev) {
+                    float result_x = rekt.x + (rekt.width / 2.) + dl;
+                    Contour newCtr;
+                    for (size_t k = 0; k < box[i].size(); k++) {
+                        if (box[i][k].x > result_x)
+                            newCtr.push_back(box[i][k]);
+                    }
+                    second_round_boxes.push_back(newCtr);
+                }
+                Point2f box_center_rb = Point2f(box_center.x - (img.cols / 2.), -(box_center.y - (img.rows / 2.)));
+                t.set_xrot((box_center_rb.x / (img.cols / 2.)) * (get_fov().x / 2.));
+                t.set_rotation(90);
+            }
             else //this box doesn't have a matching logo, we're looking at it's long side
             {
 //                tote[i].set_center(box_center);
@@ -621,6 +653,20 @@ vector<Game_Piece> Match_logo_totes(Mat img, vector<vector<Point> > box, vector<
                 t.set_rotation(90);
             }
         }
+        totes.push_back(t);
+    }
+    for (size_t i = 0; i < second_round_boxes.size(); i++)
+    {
+        Game_Piece t;
+        t.set_piece_type(OBJECT_YELLOW_TOTE);
+        Moments moment = moments(second_round_boxes[i], false);
+        Point2f box_center = Point2f(moment.m10/moment.m00, moment.m01/moment.m00);
+        circle(img, box_center, 3, COLOR_RED, 3);
+        t.set_center(box_center);
+        //all we see is the long side of 1 or more yellow totes.
+        Point2f box_center_rb = Point2f(box_center.x - (img.cols / 2.), -(box_center.y - (img.rows / 2.)));
+        t.set_xrot((box_center_rb.x / (img.cols / 2.)) * (get_fov().x / 2.));
+        t.set_rotation(0);
         totes.push_back(t);
     }
     //Determine if yellow totes are stacked
