@@ -180,14 +180,19 @@ int find_number_of_totes(Mat img, Game_Piece& tote, Point2f center, Point2f heig
     return -1;
 }
 
+// this value defines the center of the image for remapping the coordinates
+// this is because the camera is not at the exact center on our robot
+// this will differ based on your setup. at the center it should be 320
+const int center_x = 245;
+
 double Calculate_Xrot(Mat& img, Point2f center)
 {
     //remap the center from top left to center of top
-    center.x = (center.x - img.cols/2);
+    center.x = (center.x - center_x);
 
     // Calculate angle to center of box
-    double Xrot = center.x/(img.cols/2)*get_fov().x/2;
-    center.x = (center.x + img.cols/2);
+    double Xrot = center.x / static_cast<float>(center_x) * get_fov().x / (img.cols / static_cast<float>(center_x));
+    center.x = (center.x + center_x);
 
     return Xrot;
 }
@@ -590,8 +595,8 @@ vector<Game_Piece> Match_logo_totes(Mat img, vector<vector<Point> > box, vector<
         if(logo.size() == 0)
         {
             //tote[i].set_center(box_center);
-            Point2f box_center_rb = Point2f(box_center.x - (img.cols / 2.), -(box_center.y - (img.rows / 2.)));
-            t.set_xrot((box_center_rb.x / (img.cols / 2.)) * (get_fov().x / 2.));
+            Point2f box_center_rb = Point2f(box_center.x - center_x, -(box_center.y - (img.rows / 2.)));
+            t.set_xrot((box_center_rb.x / static_cast<float>(center_x)) * (get_fov().x / 2.));
             t.set_rotation(90);
         }
         //loop through every logo
@@ -608,11 +613,11 @@ vector<Game_Piece> Match_logo_totes(Mat img, vector<vector<Point> > box, vector<
 
                 //Remap the center from the top left to the center of the screen
                 //for tote_center and logo_center
-                Point2f box_center_rb = Point2f(box_center.x - (img.cols / 2.), -(box_center.y - (img.rows / 2.)));
-                logo_center = Point2f(logo_center.x - (img.cols / 2.), -(logo_center.y - (img.rows / 2.)));
+                Point2f box_center_rb = Point2f(box_center.x - center_x, -(box_center.y - (img.rows / 2.)));
+                logo_center = Point2f(logo_center.x - center_x, -(logo_center.y - (img.rows / 2.)));
 
                 //Calculate x rotation to tote_center and logo_center
-                t.set_xrot((box_center_rb.x / (img.cols / 2.)) * (get_fov().x / 2.));
+                t.set_xrot((box_center_rb.x / static_cast<float>(center_x)) * (get_fov().x / 2.));
                 t.set_rotation((box_center_rb.x - logo_center.x) / (img.cols) * (get_fov().x));
             }
             // the center is close on the Y, so it may be combined with another tote
@@ -641,15 +646,15 @@ vector<Game_Piece> Match_logo_totes(Mat img, vector<vector<Point> > box, vector<
                     }
                     second_round_boxes.push_back(newCtr);
                 }
-                Point2f box_center_rb = Point2f(box_center.x - (img.cols / 2.), -(box_center.y - (img.rows / 2.)));
-                t.set_xrot((box_center_rb.x / (img.cols / 2.)) * (get_fov().x / 2.));
+                Point2f box_center_rb = Point2f(box_center.x - center_x, -(box_center.y - (img.rows / 2.)));
+                t.set_xrot((box_center_rb.x / static_cast<float>(center_x)) * (get_fov().x / 2.));
                 t.set_rotation(90);
             }
             else //this box doesn't have a matching logo, we're looking at it's long side
             {
 //                tote[i].set_center(box_center);
-                Point2f box_center_rb = Point2f(box_center.x - (img.cols / 2.), -(box_center.y - (img.rows / 2.)));
-                t.set_xrot((box_center_rb.x / (img.cols / 2.)) * (get_fov().x / 2.));
+                Point2f box_center_rb = Point2f(box_center.x - center_x, -(box_center.y - (img.rows / 2.)));
+                t.set_xrot((box_center_rb.x / static_cast<float>(center_x)) * (get_fov().x / 2.));
                 t.set_rotation(90);
             }
         }
@@ -664,8 +669,8 @@ vector<Game_Piece> Match_logo_totes(Mat img, vector<vector<Point> > box, vector<
         circle(img, box_center, 3, COLOR_RED, 3);
         t.set_center(box_center);
         //all we see is the long side of 1 or more yellow totes.
-        Point2f box_center_rb = Point2f(box_center.x - (img.cols / 2.), -(box_center.y - (img.rows / 2.)));
-        t.set_xrot((box_center_rb.x / (img.cols / 2.)) * (get_fov().x / 2.));
+        Point2f box_center_rb = Point2f(box_center.x - center_x, -(box_center.y - (img.rows / 2.)));
+        t.set_xrot((box_center_rb.x / static_cast<float>(center_x)) * (get_fov().x / 2.));
         t.set_rotation(0);
         totes.push_back(t);
     }
