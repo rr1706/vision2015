@@ -2,9 +2,13 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <thread>
 #include <iostream>
+#include <thread>
+#include <mutex>
+#include <atomic>
 #include <signal.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>
 #include <input.hpp>
 #include "tracker.hpp"
 #include "util.hpp"
@@ -23,26 +27,48 @@ enum RobotError {
     RE_LINUX = 6
 };
 
-int frame_status, signal_status, frame_id, iter;
+atomic_int signal_status, frame_status;
+atomic_bool grabbed_image;
+int frame_id, iter;
 clock_t last_write;
 double fps_avg, last_frame;
 
-int robot_frame(Input& input)
+cv::Mat grgb, gdepth;
+// lock requested when the capture thread is taking pictures,
+// and when the processing thread is copying the image
+std::mutex img_lock;
+
+void capture_thread()
+{
+    Input input;
+    // the signal handler can stop the thread this way
+    while (!signal_status && !frame_status) {
+        img_lock.lock();
+        input.getBGR(grgb);
+        input.getDepth(gdepth);
+        grabbed_image = true;
+        img_lock.unlock();
+        usleep(1000);
+    }
+    input.cap->release();
+}
+
+
+int robot_frame()
 {
     static DepthTracker tracker;
     Mat rgb, depth, drawing;
     vector<Game_Piece> game_pieces;
     clock_t frame_start, frame_end;
+
     frame_start = clock();
     profile_start("frame");
-    profile_start("kinect");
-    try {
-        input.getBGR(rgb);
-        input.getDepth(depth);
-    } catch (cv::Exception& ex) {
-        fprintf(stderr, "failed to get camera input: %s\n", ex.what());
-        return RE_CAM_RETR;
-    }
+    profile_start("camera");
+    img_lock.lock();
+    // copy images to let the capture thread continue
+    rgb = grgb.clone();
+    depth = gdepth.clone();
+    img_lock.unlock();
     if (rgb.rows < 1 || rgb.cols < 1 || depth.cols < 1 || depth.rows < 1) {
         fprintf(stderr, "empty image\n");
         return RE_CAM_EMPTY;
@@ -50,7 +76,7 @@ int robot_frame(Input& input)
     // our robot has the camera mounted upside down
     cv::flip(rgb, rgb, -1);
     cv::flip(depth, depth, -1);
-    profile_end("kinect");
+    profile_end("camera");
     profile_start("writer");
     // one image per 4 seconds
     if ((clock() - last_write) > (CLOCKS_PER_SEC * 4)) {
@@ -63,6 +89,7 @@ int robot_frame(Input& input)
     profile_start("track");
     try {
         game_pieces = tracker.find_pieces(depth, rgb, drawing);
+//        game_pieces = tracker.find_totes(rgb);
     } catch (cv::Exception& ex) {
         fprintf(stderr, "vision tracker logic error: %s\n", ex.what());
         return RE_LOGIC;
@@ -97,7 +124,6 @@ void death()
 
 int robot_loop()
 {
-    Input input;
     if (SHOW_IMAGES) {
         namedWindow("Drawing", CV_WINDOW_NORMAL);
         namedWindow("RGB", CV_WINDOW_NORMAL);
@@ -106,16 +132,24 @@ int robot_loop()
         moveWindow("Drawing", 640, 20);
         moveWindow("RGB", 0, 20);
     }
+    grabbed_image = false;
+    // start the camera thread
+    // this might be unnecessary if the camera backend has its own threading/IPC
+    // this prevents buffering of images, outdated results
+    thread cap(capture_thread);
+    // holds off on processing until we have real data for at least one image
+    while (!grabbed_image) {
+        usleep(20);
+    }
     // processes images until told to stop
     while (!frame_status && !signal_status) {
-        frame_status = robot_frame(input);
+        frame_status = robot_frame();
         fflush(stdout);
         if (SHOW_IMAGES) {
             cv::waitKey(1);
         }
     }
-    // camera is closed here
-    input.cap->release();
+    cap.join();
     death();
     return frame_status | signal_status;
 }
