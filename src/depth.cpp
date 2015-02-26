@@ -50,7 +50,7 @@ static void process_contour(ContourData *dat)
     distance = Calculate_Real_Distance(img, center);
     profile_end("get points");
 
-    if (distance < 60.) {
+    if (distance < 70.) {
         dat->ignore = true;
         return;
     }

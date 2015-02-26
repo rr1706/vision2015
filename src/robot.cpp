@@ -56,7 +56,7 @@ void capture_thread()
 
 int robot_frame()
 {
-    static DepthTracker tracker;
+    static ColorTracker tracker;
     Mat rgb, depth, drawing;
     vector<Game_Piece> game_pieces;
     clock_t frame_start, frame_end;
@@ -88,8 +88,8 @@ int robot_frame()
     profile_end("writer");
     profile_start("track");
     try {
-        game_pieces = tracker.find_pieces(depth, rgb, drawing);
-//        game_pieces = tracker.find_totes(rgb);
+//        game_pieces = tracker.find_pieces(depth, rgb, drawing);
+        game_pieces = tracker.find_totes(rgb);
     } catch (cv::Exception& ex) {
         fprintf(stderr, "vision tracker logic error: %s\n", ex.what());
         return RE_LOGIC;
