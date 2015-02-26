@@ -771,7 +771,7 @@ void profile_print()
 }
 
 Mat kern = cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3), cv::Point(-1, -1));
-cv::Scalar yellow_tote_min_hsv(  5, 158,  40);
+cv::Scalar yellow_tote_min_hsv(  0, 120, 127);
 cv::Scalar yellow_tote_max_hsv( 35, 255, 255);
 cv::Scalar grey_tote_min_hsv(  0,   0,  13);
 cv::Scalar grey_tote_max_hsv(102, 191,  90);

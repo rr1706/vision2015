@@ -24,7 +24,7 @@ vector<Game_Piece> ColorTracker::find_totes(Mat img)
 
     //process the image
     //todo: use connor's multithresh to threshold
-    inRange(hsv, Scalar(18, 158, 137), Scalar(30, 255, 255), binary);
+    inRange(hsv, yellow_tote_min_hsv, yellow_tote_max_hsv, binary);
     erode(binary, binary, kern, Point(-1,-1), 1);
     //dilate(binary, binary, kern, Point(-1,-1), 1);
 

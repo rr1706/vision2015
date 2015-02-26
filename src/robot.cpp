@@ -180,7 +180,6 @@ int robot_main(int argc, char *argv[])
         throw std::runtime_error("Failed to log error stream");
     mkdir("depth", 0775);
     mkdir("color", 0775);
-    read_config();
     if (argc >= 2) {
         sscanf(argv[1], "%d", &frame_id);
     }
