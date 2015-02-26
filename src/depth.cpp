@@ -13,6 +13,7 @@ using namespace cv;
 using namespace std;
 
 struct ContourData {
+    bool ignore;
     int i;
     Contour contour;
     Game_Piece unknown_game_piece;
@@ -48,6 +49,11 @@ static void process_contour(ContourData *dat)
     // calculate distance based on pixel intensity of the depth map
     distance = Calculate_Real_Distance(img, center);
     profile_end("get points");
+
+    if (distance < 60.) {
+        dat->ignore = true;
+        return;
+    }
 
     if (SHOW_MIN_POINTS) {
         circle(drawing, closest, 5, COLOR_BLUE, -1, 8, 0);
@@ -160,6 +166,7 @@ std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, Mat rgb, Mat &output)
         }
         approxPolyDP(contours[i], polygons[i], 15, true);
         ContourData *dat = new ContourData;
+        dat->ignore =  false;
         dat->contour = contours[i];
         dat->depth = img;
         dat->drawing = drawing.clone();
@@ -174,6 +181,8 @@ std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, Mat rgb, Mat &output)
     }
     for (auto it = threads.begin(); it != threads.end(); ++it) {
         it->first->join();
+        if (it->second->ignore)
+            continue;
         game_piece.push_back(it->second->unknown_game_piece);
         if (SHOW_IMAGES) {
             Display_Game_Piece(it->second->unknown_game_piece, drawing, it->second->unknown_game_piece.get_center());
