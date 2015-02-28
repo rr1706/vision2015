@@ -11,7 +11,7 @@ inline void DEBUG_SHOW(std::string, cv::Mat) {}
 inline void pdebug(const char *, ...) {}
 #endif
 
-#define SHOW_IMAGES true
+#define SHOW_IMAGES false
 #define SHOW_COLORS false
 
 #define COLOR_RED cv::Scalar(0, 0, 255)

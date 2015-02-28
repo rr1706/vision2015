@@ -48,7 +48,7 @@ void capture_thread()
         input.getDepth(gdepth);
         grabbed_image = true;
         img_lock.unlock();
-        usleep(1000);
+        usleep(30000);
     }
     input.cap->release();
 }

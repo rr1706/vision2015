@@ -61,15 +61,21 @@ vector<Game_Piece> ColorTracker::find_totes(cv::Mat depth, cv::Mat img, cv::Mat 
     vector<Game_Piece> totes = Match_logo_totes(draw, box, logo);
     profile_end("match");
 
-    drawContours(draw, box, -1, COLOR_RED, 1, 8);
+    profile_start("draw");
+    if (SHOW_IMAGES) {
+        drawContours(draw, box, -1, COLOR_RED, 1, 8);
+    }
     for(size_t i = 0; i < totes.size(); i ++)
     {
         totes[i].set_distance(Calculate_Real_Distance(depth, totes[i].get_center()));
-        Display_Game_Piece(totes[i], draw, totes[i].get_center());
+        if (SHOW_IMAGES) {
+            Display_Game_Piece(totes[i], draw, totes[i].get_center());
+        }
     }
 
     if (SHOW_IMAGES) {
         imshow("Drawing", draw);
     }
+    profile_end("draw");
     return totes;
 }
