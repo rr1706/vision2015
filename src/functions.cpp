@@ -577,7 +577,7 @@ bool check_point(Scalar color, Scalar hsv_min, Scalar hsv_max)
             && color[2] > rgb_min[0] && color[2] < rgb_max[0];
 }
 
-vector<Game_Piece> Match_logo_totes(Mat img, vector<vector<Point> > box, vector<vector<Point> > logo)
+vector<Game_Piece> Match_logo_totes(Mat& img, std::vector<Contour> box, std::vector<Contour> logo)
 {
     vector<Game_Piece> totes;
     vector<Contour> second_round_boxes;
@@ -588,6 +588,10 @@ vector<Game_Piece> Match_logo_totes(Mat img, vector<vector<Point> > box, vector<
         t.set_piece_type(OBJECT_YELLOW_TOTE);
         Moments moment = moments(box[i], false);
         Point2f box_center = Point2f(moment.m10/moment.m00, moment.m01/moment.m00);
+        if (box_center.x > 600)
+            continue;
+        if (box_center.x >= 640 || box_center.x < 0 || box_center.y >= 480 || box_center.y < 0)
+            continue;
         circle(img, box_center, 3, COLOR_RED, 3);
         Rect rekt = boundingRect(box[i]);
         t.set_center(box_center);
@@ -666,6 +670,10 @@ vector<Game_Piece> Match_logo_totes(Mat img, vector<vector<Point> > box, vector<
         t.set_piece_type(OBJECT_YELLOW_TOTE);
         Moments moment = moments(second_round_boxes[i], false);
         Point2f box_center = Point2f(moment.m10/moment.m00, moment.m01/moment.m00);
+        if (box_center.x > 600)
+            continue;
+        if (box_center.x >= 640 || box_center.x < 0 || box_center.y >= 480 || box_center.y < 0)
+            continue;
         circle(img, box_center, 3, COLOR_RED, 3);
         t.set_center(box_center);
         //all we see is the long side of 1 or more yellow totes.
@@ -718,6 +726,10 @@ void send_udp(std::vector<Game_Piece> pieces)
     auto closest = pieces.end();
     for (auto it = pieces.begin(); it < pieces.end(); ++it) {
         if (it->get_piece_type() == OBJECT_BUMP)
+            continue;
+        if (it->get_distance() > 0 && it->get_distance() < 70.)
+            continue;
+        if (it->get_distance() > 470)
             continue;
         if (closest == pieces.end() || it->get_distance() < closest->get_distance()) {
             closest = it;
@@ -808,3 +820,15 @@ void write_config()
     config_out.release();
 }
 
+void remove_black_borders(Mat &out)
+{
+    out = out(cv::Rect(22, 12, 590, 450));
+    for (int x = 0; x < out.cols; x++) {
+        for (int y = 0; y < out.rows; y++) {
+            if (out.at<uint8_t>(y, x) == 0) {
+                out.at<uint8_t>(y, x) = 254;
+            }
+        }
+    }
+    cv::resize(out,out,cv::Size(640,480),640/590,480/450);
+}

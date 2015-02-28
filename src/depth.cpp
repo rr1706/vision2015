@@ -50,11 +50,6 @@ static void process_contour(ContourData *dat)
     distance = Calculate_Real_Distance(img, center);
     profile_end("get points");
 
-    if (distance < 70.) {
-        dat->ignore = true;
-        return;
-    }
-
     if (SHOW_MIN_POINTS) {
         circle(drawing, closest, 5, COLOR_BLUE, -1, 8, 0);
         circle(drawing, top, 2, COLOR_RED, -1, 8, 0);
@@ -101,8 +96,11 @@ static void process_contour(ContourData *dat)
     profile_end("contour_" + std::to_string(dat->i));
 }
 
-std::vector<Game_Piece> DepthTracker::find_pieces(Mat img, Mat rgb, Mat &output)
+std::vector<Game_Piece> DepthTracker::find_totes(Mat img, Mat rgb, Mat &output)
 {
+    profile_start("borders");
+    remove_black_borders(img);
+    profile_end("borders");
     profile_start("filter");
     Mat dst, detected_edges, drawing;
 

@@ -11,10 +11,10 @@
 using namespace std;
 using namespace cv;
 
-vector<Game_Piece> ColorTracker::find_totes(Mat img)
+vector<Game_Piece> ColorTracker::find_totes(cv::Mat depth, cv::Mat img, cv::Mat &draw)
 {
-    Mat hsv, binary, draw;
-    draw = img.clone();
+    Mat hsv, binary;
+    img.copyTo(draw);
     profile_start("filter");
 
     //todo: do connor's multithresh process here, doesn't have to be before the code release.
@@ -64,11 +64,12 @@ vector<Game_Piece> ColorTracker::find_totes(Mat img)
     drawContours(draw, box, -1, COLOR_RED, 1, 8);
     for(size_t i = 0; i < totes.size(); i ++)
     {
-        totes[i].set_distance(calculate_distance(binary, totes[i].get_center()));
+        totes[i].set_distance(Calculate_Real_Distance(depth, totes[i].get_center()));
         Display_Game_Piece(totes[i], draw, totes[i].get_center());
     }
 
-    if (SHOW_IMAGES)
+    if (SHOW_IMAGES) {
         imshow("Drawing", draw);
+    }
     return totes;
 }

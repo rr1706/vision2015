@@ -12,7 +12,7 @@ extern cv::Mat kern;
 const float camera_height = 50; //in
 const float camera_angle = 15; //degrees
 const float tote_center_height = 5; //in
-const float adjacent = camera_height - tote_center_height; //in
+const float adjacent = (camera_height - tote_center_height) * 2.54; //in
 
 //Subject to change
 const int max_area = 1000000;
@@ -42,17 +42,17 @@ const int searchbuffer = 15;
 
 class ColorTracker {
 public:
-    std::vector<Game_Piece> find_totes(cv::Mat img);
+    std::vector<Game_Piece> find_totes(cv::Mat image, cv::Mat rgb, cv::Mat &output);
 };
 
 class DepthTracker {
 public:
-    std::vector<Game_Piece> find_pieces(cv::Mat image, cv::Mat rgb, cv::Mat &output);
+    std::vector<Game_Piece> find_totes(cv::Mat image, cv::Mat rgb, cv::Mat &output);
 };
 
 class IRTracker {
 public:
-    std::vector<YellowTote> find_totes(cv::Mat img, cv::Mat &draw);
+    std::vector<YellowTote> find_totes(cv::Mat image, cv::Mat rgb, cv::Mat &output);
 };
 
 #endif // TRACKER_HPP

@@ -88,19 +88,20 @@ int robot_frame()
     profile_end("writer");
     profile_start("track");
     try {
-//        game_pieces = tracker.find_pieces(depth, rgb, drawing);
-        game_pieces = tracker.find_totes(rgb);
+        game_pieces = tracker.find_totes(depth, rgb, drawing);
     } catch (cv::Exception& ex) {
         fprintf(stderr, "vision tracker logic error: %s\n", ex.what());
         return RE_LOGIC;
     }
+    profile_end("track");
+    profile_start("udp");
     try {
         send_udp(game_pieces);
     } catch (std::runtime_error& ex) {
         fprintf(stderr, "sending udp: %s\n", ex.what());
         return RE_UDP;
     }
-    profile_end("track");
+    profile_end("udp");
     profile_end("frame");
     profile_print();
     frame_end = clock();
@@ -144,7 +145,9 @@ int robot_loop()
     // processes images until told to stop
     while (!frame_status && !signal_status) {
         frame_status = robot_frame();
+        profile_start("flush");
         fflush(stdout);
+        profile_end("flush");
         if (SHOW_IMAGES) {
             cv::waitKey(1);
         }

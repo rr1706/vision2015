@@ -20,11 +20,11 @@ int robot();
 int imdir() {
     int i = 0, raw, key;
     ColorTracker tracker;
-    Mat color;
+    Mat color, draw;
     while (true) {
         printf("%d\n", i);
         color = imread("../images/yellow box/im_" + std::to_string(i) + ".jpg");
-        tracker.find_totes(color);
+        tracker.find_totes(color, color, draw);
         imshow("Input", color);
         raw = cv::waitKey(0) & 0xFFFF;
         key = raw & 0xFF;
@@ -56,7 +56,7 @@ int irtest() {
             break;
         if (key == ' ')
             waitKey();
-        tracker.find_totes(ir, draw);
+        tracker.find_totes(ir, ir, draw);
         writer << draw;
         profile_end("frame");
         profile_print();
@@ -96,7 +96,7 @@ int depthvideo() {
         if (key == ' ')
             waitKey(0);
         profile_start("track");
-        vector<Game_Piece> game_pieces = tracker.find_pieces(depth, rgb, drawing);
+        vector<Game_Piece> game_pieces = tracker.find_totes(depth, rgb, drawing);
         send_udp(game_pieces);
         profile_end("track");
 //        profile_start("write");
@@ -138,7 +138,7 @@ int depthimdir() {
             continue;
         imshow("RGB", color);
 
-        tracker.find_pieces(depth, color, drawing);
+        tracker.find_totes(depth, color, drawing);
         raw = cv::waitKey(0) & 0xFFFF;
         key = raw & 0xFF;
         if ((raw & 0xFF00) == 0xFF00) {
@@ -159,10 +159,10 @@ int color()
 {
     Input input;
     ColorTracker tracker;
-    Mat color;
+    Mat color, draw;
     while (true) {
         input.getBGR(color);
-        auto totes = tracker.find_totes(color);
+        auto totes = tracker.find_totes(color, color, draw);
         send_udp(totes);
         int key = waitKey(1) & 0xFF;
         if (key == 27)
@@ -176,10 +176,10 @@ int color()
 int color_oneimage()
 {
     ColorTracker tracker;
-    Mat image;
+    Mat image, depth, draw;
 
     image = cv::imread("/home/connor/robotics/2015/images/multi tote color.jpg");
-    tracker.find_totes(image);
+    tracker.find_totes(depth, image, draw);
     cv::waitKey(0);
     return 0;
 }
@@ -254,14 +254,6 @@ void handle_signal(int signum)
 
 int robot_main(int argc, char *argv[]);
 
-#ifdef DEBUG
-int main() {
-    signal(SIGINT, handle_signal);
-    signal(SIGTERM, handle_signal);
-    read_config();
-    return color_oneimage();
-#else
 int main(int argc, char *argv[]) {
     return robot_main(argc, argv);
-#endif
 }

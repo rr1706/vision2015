@@ -85,7 +85,7 @@ cv::Mat multiple_threshold(cv::Mat img, cv::Scalar hsv_min, cv::Scalar hsv_max,
 bool check_point(cv::Scalar color, cv::Scalar hsv_min, cv::Scalar hsv_max);
 
 //Matches logos to boxes and stores them in totes.
-std::vector<Game_Piece> Match_logo_totes(cv::Mat img, std::vector<std::vector<cv::Point> > box, std::vector<std::vector<cv::Point> > logo);
+std::vector<Game_Piece> Match_logo_totes(cv::Mat& img, std::vector<Contour> box, std::vector<Contour> logo);
 
 float calculate_distance(cv::Mat& img, cv::Point2f center);
 
@@ -121,5 +121,6 @@ void profile_print();
 void read_config();
 void write_config();
 
+void remove_black_borders(cv::Mat &depth);
 #endif // FUNCTIONS_H
 
