@@ -718,12 +718,15 @@ float calculate_distance(Mat& img, Point2f center)
     return distance;
 }
 
+extern int frame_id;
+
 void send_udp(std::vector<Game_Piece> pieces)
 {
     static int iter = 0;
     static UdpSender udp("roboRIO-1706.local", "http");
-    static SolutionLog lg("vision_output.csv", {"iter", "clock", "xrot", "distance", "rotation", "green", "type", "height"});
+    static SolutionLog lg("vision_output.csv", {"iter", "frame", "clock", "xrot", "distance", "rotation", "green", "type", "height"});
     auto closest = pieces.end();
+    unsigned long cputime = clock(); // counter signed integer overflow error
     for (auto it = pieces.begin(); it < pieces.end(); ++it) {
         if (it->get_piece_type() == OBJECT_BUMP)
             continue;
@@ -738,7 +741,8 @@ void send_udp(std::vector<Game_Piece> pieces)
     if (closest != pieces.end()) {
         udp.send(*closest);
         lg.log("iter", iter++);
-        lg.log("clock", static_cast<double>(clock()) / CLOCKS_PER_SEC);
+        lg.log("frame", frame_id);
+        lg.log("clock", static_cast<double>(cputime) / CLOCKS_PER_SEC);
         lg.log("xrot", closest->get_xrot());
         lg.log("distance", closest->get_distance());
         lg.log("rotation", closest->get_rotation());
