@@ -96,13 +96,14 @@ static void process_contour(ContourData *dat)
     profile_end("contour_" + std::to_string(dat->i));
 }
 
-std::vector<Game_Piece> DepthTracker::find_totes(Mat img, Mat rgb, Mat &output)
+static Mat dst, detected_edges;
+
+std::vector<Game_Piece> DepthTracker::find_totes(Mat img, Mat rgb, Mat &drawing)
 {
     profile_start("borders");
     remove_black_borders(img);
     profile_end("borders");
     profile_start("filter");
-    Mat dst, detected_edges, drawing;
 
     dst.create( img.size(), img.type() );
 
@@ -173,7 +174,7 @@ std::vector<Game_Piece> DepthTracker::find_totes(Mat img, Mat rgb, Mat &output)
         thread *t = new thread(process_contour, dat);
         threads[t] = dat;
     }
-    if (SHOW_IMAGES) {
+    if (DRAW) {
         drawContours(drawing, contours, -1, COLOR_RED, 1, 8);
         drawContours(drawing, polygons, -1, COLOR_WHITE, 1, 8);
     }
@@ -182,19 +183,12 @@ std::vector<Game_Piece> DepthTracker::find_totes(Mat img, Mat rgb, Mat &output)
         if (it->second->ignore)
             continue;
         game_piece.push_back(it->second->unknown_game_piece);
-        if (SHOW_IMAGES) {
+        if (DRAW) {
             Display_Game_Piece(it->second->unknown_game_piece, drawing, it->second->unknown_game_piece.get_center());
         }
         delete it->first;
         delete it->second;
     }
     profile_end("contours");
-    drawing.copyTo(output);
-
-    if (SHOW_IMAGES) {
-        imshow("Drawing", drawing);
-        imshow("RGB", rgb);
-    }
-
     return game_piece;
 }

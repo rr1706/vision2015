@@ -10,7 +10,7 @@ gitupdate() {
 	git daemon &
 	ssh $login "cd work/vision2015/ && git pull connor master"
 	killall -9 git-daemon
-	git diff > patch
+	git diff-index HEAD --binary > patch
 	if [ -s patch ]; then
 		scp patch $login:work/vision2015/
 		ssh $login "cd work/vision2015/ && git apply patch"
