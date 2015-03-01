@@ -5,6 +5,7 @@
 #include <thread>
 #include <mutex>
 #include <atomic>
+#include <chrono>
 #include <signal.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -44,8 +45,17 @@ void capture_thread()
     // the signal handler can stop the thread this way
     while (!signal_status && !frame_status) {
         img_lock.lock();
-        input.getBGR(grgb);
-        input.getDepth(gdepth);
+        try {
+            input.getBGR(grgb);
+            input.getDepth(gdepth);
+        } catch (cv::Exception& ex) {
+            fprintf(stderr, "failed to capture image: %s", ex.what());
+            abort();
+        }
+        if (grgb.empty() || gdepth.empty()) {
+            fprintf(stderr, "rgb/depth images are empty");
+            abort();
+        }
         grabbed_image = true;
         img_lock.unlock();
         usleep(30000);
@@ -53,42 +63,40 @@ void capture_thread()
     input.cap->release();
 }
 
+static ColorTracker tracker;
+static vector<Game_Piece> game_pieces;
+static chrono::high_resolution_clock::time_point frame_start, frame_end;
+static Mat colorMat, depthMat, drawing;
 
 int robot_frame()
 {
-    static ColorTracker tracker;
-    Mat rgb, depth, drawing;
-    vector<Game_Piece> game_pieces;
-    clock_t frame_start, frame_end;
-
-    frame_start = clock();
+    using namespace std::chrono;
+    frame_start = high_resolution_clock::now();
     profile_start("frame");
     profile_start("camera");
+    profile_start("lock_wait");
     img_lock.lock();
+    profile_end("lock_wait");
     // copy images to let the capture thread continue
-    rgb = grgb.clone();
-    depth = gdepth.clone();
+    grgb.copyTo(colorMat);
+    gdepth.copyTo(depthMat);
     img_lock.unlock();
-    if (rgb.rows < 1 || rgb.cols < 1 || depth.cols < 1 || depth.rows < 1) {
-        fprintf(stderr, "empty image\n");
-        return RE_CAM_EMPTY;
-    }
     // our robot has the camera mounted upside down
-    cv::flip(rgb, rgb, -1);
-    cv::flip(depth, depth, -1);
+    cv::flip(colorMat, colorMat, -1);
+    cv::flip(depthMat, depthMat, -1);
     profile_end("camera");
     profile_start("writer");
     // one image per 4 seconds
     if ((clock() - last_write) > (CLOCKS_PER_SEC * 4)) {
         last_write = clock();
-        imwrite("color/robot_" + std::to_string(frame_id) + ".jpg", rgb);
-        imwrite("depth/robot_" + std::to_string(frame_id) + ".jpg", depth);
+        imwrite("color/robot_" + std::to_string(frame_id) + ".jpg", colorMat);
+        imwrite("depth/robot_" + std::to_string(frame_id) + ".jpg", depthMat);
         frame_id ++;
     }
     profile_end("writer");
     profile_start("track");
     try {
-        game_pieces = tracker.find_totes(depth, rgb, drawing);
+        game_pieces = tracker.find_totes(depthMat, colorMat, drawing);
     } catch (cv::Exception& ex) {
         fprintf(stderr, "vision tracker logic error: %s\n", ex.what());
         return RE_LOGIC;
@@ -102,11 +110,18 @@ int robot_frame()
         return RE_UDP;
     }
     profile_end("udp");
+    if (SHOW_IMAGES) {
+        profile_start("imshow");
+        pyrDown(drawing, drawing, Size(drawing.cols / 2, drawing.rows / 2));
+        imshow("Drawing", drawing);
+//        imshow("RGB", colorMat);
+        profile_end("imshow");
+    }
     profile_end("frame");
     profile_print();
-    frame_end = clock();
-    last_frame = static_cast<double>(frame_end - frame_start) / CLOCKS_PER_SEC;
-    fps_avg = fps_avg * 0.9 + last_frame * 0.1;
+    frame_end = high_resolution_clock::now();
+    duration<double> time_span = duration_cast<duration<double>>(frame_end - frame_start);
+    fps_avg = fps_avg * 0.9 + time_span.count() * 0.1;
     printf("FPS: %.2f\n", 1 / fps_avg);
     iter ++;
     return RE_SUCCESS;
@@ -127,11 +142,11 @@ int robot_loop()
 {
     if (SHOW_IMAGES) {
         namedWindow("Drawing", CV_WINDOW_NORMAL);
-        namedWindow("RGB", CV_WINDOW_NORMAL);
+//        namedWindow("RGB", CV_WINDOW_NORMAL);
         resizeWindow("Drawing", 640, 480);
-        resizeWindow("RGB", 640, 480);
-        moveWindow("Drawing", 640, 20);
-        moveWindow("RGB", 0, 20);
+//        resizeWindow("RGB", 640, 480);
+        moveWindow("Drawing", 0, 20);
+//        moveWindow("RGB", 640, 20);
     }
     grabbed_image = false;
     // start the camera thread

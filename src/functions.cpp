@@ -722,11 +722,14 @@ extern int frame_id;
 
 void send_udp(std::vector<Game_Piece> pieces)
 {
+    using namespace chrono;
     static int iter = 0;
+    static high_resolution_clock::time_point start_time = high_resolution_clock::now();
     static UdpSender udp("roboRIO-1706.local", "http");
     static SolutionLog lg("vision_output.csv", {"iter", "frame", "clock", "xrot", "distance", "rotation", "green", "type", "height"});
     auto closest = pieces.end();
-    unsigned long cputime = clock(); // counter signed integer overflow error
+    high_resolution_clock::time_point frame_time = high_resolution_clock::now();
+    duration<double> time_span = duration_cast<duration<double>>(frame_time - start_time);
     for (auto it = pieces.begin(); it < pieces.end(); ++it) {
         if (it->get_piece_type() == OBJECT_BUMP)
             continue;
@@ -742,7 +745,7 @@ void send_udp(std::vector<Game_Piece> pieces)
         udp.send(*closest);
         lg.log("iter", iter++);
         lg.log("frame", frame_id);
-        lg.log("clock", static_cast<double>(cputime) / CLOCKS_PER_SEC);
+        lg.log("clock", time_span.count());
         lg.log("xrot", closest->get_xrot());
         lg.log("distance", closest->get_distance());
         lg.log("rotation", closest->get_rotation());
@@ -756,13 +759,17 @@ void send_udp(std::vector<Game_Piece> pieces)
     }
 }
 
-static std::map<std::string, clock_t> profiles;
+struct profile_time {
+    chrono::high_resolution_clock::time_point start, end;
+};
+
+static std::map<std::string, profile_time> profiles;
 static int level = 0;
 
 void profile_start(string id)
 {
     string store(level, '>');
-    profiles[store + id] = clock();
+    profiles[store + id].start = chrono::high_resolution_clock::now();
     level ++;
 }
 
@@ -770,17 +777,15 @@ void profile_end(string id)
 {
     level --;
     string store(level, '>');
-    clock_t start = profiles[store + id];
-    profiles[store + id] = clock() - start;
+    profiles[store + id].end = chrono::high_resolution_clock::now();
 }
 
 void profile_print()
 {
     for (auto it = profiles.begin(); it != profiles.end(); ++it) {
-        double duration = it->second;
-        duration = duration / CLOCKS_PER_SEC;
+        chrono::duration<double> time_span = chrono::duration_cast<chrono::duration<double>>(it->second.end - it->second.start);
         string blanks(20 - it->first.size(), ' ');
-        printf("Profile [%s]%s %.2fs\n", it->first.c_str(), blanks.c_str(), duration);
+        printf("Profile [%s]%s %.4fs\n", it->first.c_str(), blanks.c_str(), time_span.count());
     }
     printf("--------------------------------------------------------------------------------\n");
     profiles.clear();
