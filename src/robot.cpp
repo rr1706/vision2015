@@ -112,6 +112,9 @@ int robot_frame()
     profile_end("udp");
     if (SHOW_IMAGES) {
         profile_start("imshow");
+        char fps[16];
+        sprintf(fps, "FPS: %.2f", 1 / fps_avg);
+        putText(drawing, fps, Point(550, 20), CV_FONT_HERSHEY_COMPLEX_SMALL, 0.75, COLOR_BLUE);
         pyrDown(drawing, drawing, Size(drawing.cols / 2, drawing.rows / 2));
         imshow("Drawing", drawing);
 //        imshow("RGB", colorMat);

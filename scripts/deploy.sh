@@ -5,9 +5,12 @@ login=odroid@odroid.local
 mode=Release
 
 gitupdate() {
+	ssh $login "cd work/vision2015/ && git reset"
 	ssh $login "cd work/vision2015/ && git checkout ."
-	killall -9 git-daemon || echo
+	ssh $login "cd work/vision2015/ && git clean -df"
+	killall git-daemon || echo
 	git daemon &
+	sleep 1
 	ssh $login "cd work/vision2015/ && git pull connor master"
 	killall -9 git-daemon
 	git diff-index HEAD --binary > patch

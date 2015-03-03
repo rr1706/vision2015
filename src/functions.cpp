@@ -666,6 +666,9 @@ vector<Game_Piece> Match_logo_totes(Mat& img, std::vector<Contour> box, std::vec
     }
     for (size_t i = 0; i < second_round_boxes.size(); i++)
     {
+        if (second_round_boxes[i].empty()) {
+            continue;
+        }
         Game_Piece t;
         t.set_piece_type(OBJECT_YELLOW_TOTE);
         Moments moment = moments(second_round_boxes[i], false);
