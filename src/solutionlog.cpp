@@ -1,4 +1,5 @@
 #include "solutionlog.hpp"
+#include <iomanip>
 
 SolutionLog::SolutionLog() : writes(0)
 {
@@ -44,6 +45,8 @@ SolutionLog& SolutionLog::log(std::string columnName, double data)
 
 void SolutionLog::flush()
 {
+    this->file << std::setprecision(6);
+    this->file << std::fixed;
     for (std::string column : this->columns) {
         this->file << this->data[column] << ",";
     }

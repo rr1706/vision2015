@@ -15,6 +15,9 @@
 #include "util.hpp"
 #include "functions.hpp"
 
+const bool SAVE_IMAGES = false;
+const float IMAGE_FREQ_SEC = 4.;
+
 using namespace cv;
 using namespace std;
 
@@ -87,7 +90,7 @@ int robot_frame()
     profile_end("camera");
     profile_start("writer");
     // one image per 4 seconds
-    if ((clock() - last_write) > (CLOCKS_PER_SEC * 4)) {
+    if (SAVE_IMAGES && (clock() - last_write) > (CLOCKS_PER_SEC * IMAGE_FREQ_SEC)) {
         last_write = clock();
         imwrite("color/robot_" + std::to_string(frame_id) + ".jpg", colorMat);
         imwrite("depth/robot_" + std::to_string(frame_id) + ".jpg", depthMat);
@@ -164,7 +167,7 @@ int robot_loop()
     while (!frame_status && !signal_status) {
         frame_status = robot_frame();
         profile_start("flush");
-        fflush(stdout);
+//        fflush(stdout);
         profile_end("flush");
         if (SHOW_IMAGES) {
             cv::waitKey(1);

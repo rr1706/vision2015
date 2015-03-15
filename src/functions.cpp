@@ -729,7 +729,7 @@ void send_udp(std::vector<Game_Piece> pieces)
     static int iter = 0;
     static high_resolution_clock::time_point start_time = high_resolution_clock::now();
     static UdpSender udp("roboRIO-1706.local", "http");
-    static SolutionLog lg("vision_output.csv", {"iter", "frame", "clock", "xrot", "distance", "rotation", "green", "type", "height"});
+    static SolutionLog lg("vision_output_ " + std::to_string(frame_id) + ".csv", {"iter", "frame", "clock", "xrot", "distance", "rotation", "green", "type", "height"});
     auto closest = pieces.end();
     high_resolution_clock::time_point frame_time = high_resolution_clock::now();
     duration<double> time_span = duration_cast<duration<double>>(frame_time - start_time);
@@ -785,11 +785,31 @@ void profile_end(string id)
 
 void profile_print()
 {
+    using namespace std::chrono;
+    /*
     for (auto it = profiles.begin(); it != profiles.end(); ++it) {
         chrono::duration<double> time_span = chrono::duration_cast<chrono::duration<double>>(it->second.end - it->second.start);
         string blanks(20 - it->first.size(), ' ');
         printf("Profile [%s]%s %.4fs\n", it->first.c_str(), blanks.c_str(), time_span.count());
     }
+    */
+    static SolutionLog profLog;
+    static uint64_t iter;
+    if (!profLog.isOpen()) {
+        iter = 0;
+        vector<string> columns;
+        columns.push_back("iter");
+        for (auto it = profiles.begin(); it != profiles.end(); ++it) {
+            columns.push_back(it->first);
+        }
+        profLog.open("profile.csv", columns);
+    }
+    profLog.log("iter", iter++);
+    for (auto it = profiles.begin(); it != profiles.end(); ++it) {
+        duration<double> time_span = duration_cast<duration<double> >(it->second.end - it->second.start);
+        profLog.log(it->first, time_span.count());
+    }
+    profLog.flush();
     printf("--------------------------------------------------------------------------------\n");
     profiles.clear();
 }
