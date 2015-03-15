@@ -65,7 +65,18 @@ vector<Game_Piece> ColorTracker::find_totes(cv::Mat depth, cv::Mat img, cv::Mat 
     }
     for(size_t i = 0; i < totes.size(); i ++)
     {
-        totes[i].set_distance(Calculate_Real_Distance(depth, totes[i].get_center()));
+        Point2i p1 = totes[i].get_center();
+        Point2i p2 = p1 + Point2i(20, 0);
+        Point2i p3 = p1 + Point2i(20, 0);
+        Scalar i2 = depth.at<uchar>(p2);
+        Scalar i3 = depth.at<uchar>(p3);
+        if (i3[0] < 255 && i3[0] > 0) {
+            totes[i].set_distance(Calculate_Real_Distance(depth, p3));
+        } else if (i2[0] < 255 && i2[0] > 0) {
+            totes[i].set_distance(Calculate_Real_Distance(depth, p2));
+        } else {
+            totes[i].set_distance(Calculate_Real_Distance(depth, totes[i].get_center()));
+        }
         if (DRAW) {
             Display_Game_Piece(totes[i], draw, totes[i].get_center());
         }
