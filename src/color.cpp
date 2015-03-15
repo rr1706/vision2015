@@ -28,8 +28,6 @@ vector<Game_Piece> ColorTracker::find_totes(cv::Mat depth, cv::Mat img, cv::Mat 
     erode(binary, binary, kern, Point(-1,-1), 1);
     //dilate(binary, binary, kern, Point(-1,-1), 1);
 
-    DEBUG_SHOW("binary image", binary);
-
     vector<vector<Point> > contour;
     vector<Vec4i> hierarchy;
     vector<vector<Point> > logo;

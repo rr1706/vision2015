@@ -1,4 +1,5 @@
 #include <opencv2/highgui/highgui.hpp>
+#include <chrono>
 #include <signal.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -155,6 +156,51 @@ int depthimdir() {
     return 0;
 }
 
+int colorimdir() {
+    int raw, key;
+    namedWindow("Drawing", CV_WINDOW_NORMAL);
+    namedWindow("RGB", CV_WINDOW_NORMAL);
+    resizeWindow("Drawing", 640, 480);
+    resizeWindow("RGB", 640, 480);
+    moveWindow("Drawing", 640, 20);
+    moveWindow("RGB", 0, 20);
+    ColorTracker tracker;
+    Mat drawing, depth, color;
+    string base_folder = "imdir/";
+    DIR *dir;
+    struct dirent *dp;
+    dir = opendir((base_folder + "/color/").c_str());
+    while ((dp = readdir(dir)) != NULL) {
+        string fn = dp->d_name;
+        if (fn == "." || fn == "..")
+            continue;
+        printf("\n>>>>> %s\n", fn.c_str());
+        depth = imread(base_folder + "/depth/" + fn, CV_LOAD_IMAGE_GRAYSCALE);
+        color = imread(base_folder + "/color/" + fn);
+        if (color.rows < 1 || depth.rows < 1)
+            continue;
+        imshow("RGB", color);
+
+        tracker.find_totes(depth, color, drawing);
+        imshow("Drawing", drawing);
+
+        raw = cv::waitKey(0) & 0xFFFF;
+        key = raw & 0xFF;
+        if ((raw & 0xFF00) == 0xFF00) {
+            if (key == 0x53) {
+                continue;
+            }
+        } else if (key == 27) {
+            break;
+        }
+        fflush(stdout);
+    }
+    closedir(dir);
+    cv::destroyAllWindows();
+    return 0;
+}
+
+
 int color()
 {
     Input input;
@@ -245,6 +291,67 @@ int recordimdir()
     return 0;
 }
 
+int pit_ir_demo()
+{
+    inputSource = KINECT;
+    Input input;
+    IRTracker tracker;
+    Mat depth, ir, draw;
+    int keypress;
+    while (keypress != 27) {
+        input.getIR(ir);
+        tracker.find_totes(depth, ir, draw);
+        imshow("Drawing", draw);
+        keypress = waitKey(1) & 0xFF;
+    }
+    return 0;
+}
+
+int pit_depth_demo()
+{
+    inputSource = KINECT;
+    Input input;
+    DepthTracker tracker;
+    Mat depth, color, draw;
+    int keypress;
+    while (keypress != 27) {
+        input.getDepth(depth);
+        tracker.find_totes(depth, color, draw);
+        imshow("Drawing", draw);
+        keypress = waitKey(1) & 0xFF;
+    }
+    return 0;
+}
+
+int pit_color_demo()
+{
+    inputSource = KINECT;
+    Input input;
+    ColorTracker tracker;
+    Mat depth, color, draw;
+    int keypress;
+    while (keypress != 27) {
+        input.getBGR(color);
+        input.getDepth(depth);
+        tracker.find_totes(depth, color, draw);
+        imshow("Drawing", draw);
+        keypress = waitKey(1) & 0xFF;
+    }
+    return 0;
+}
+
+int pit_demo(int argc, char *argv[])
+{
+    if (argc > 1) {
+        if ("depth" == string(argv[1])) {
+            return pit_depth_demo();
+        } else if ("color" == string(argv[1])) {
+            return pit_color_demo();
+        }
+    }
+    return pit_ir_demo();
+}
+
 void handle_signal(int signum)
 {
     if (signum == SIGINT || signum == SIGTERM)
@@ -255,5 +362,6 @@ void handle_signal(int signum)
 int robot_main(int argc, char *argv[]);
 
 int main(int argc, char *argv[]) {
+//    return colorimdir();
     return robot_main(argc, argv);
 }
