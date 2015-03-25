@@ -5,7 +5,7 @@ FIRST (For Inspiration and Recognition of Science and Technology) sponsors FIRST
 This allows for detection of the grey tote, the yellow tote, and the recycle bin (green bin internally). It provides for the rotation to line up with each object as well as orientation for strafing to the short side of a box. It returns how many totes are in a stack and whether a stack has a recycle bin on top of it.
 
 ### Contributors
-The program was created by Team 1706, Ratchet Rocker Robotics. Connor is the lead/teacher and Hunter is now technically a mentor but did most programming.
+The program was created by Team 1706, Ratchet Rocker Robotics. Connor is the lead/teacher and Hunter is now technically a mentor.
 
 Team members:
 * Connor Monahan
